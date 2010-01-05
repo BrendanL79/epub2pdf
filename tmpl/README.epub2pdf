@@ -1,0 +1,122 @@
+epub2pdf v0.1 - 3 January 2010 - Copyright 2010 Brendan C. LeFebvre.
+
+See LICENSE DETAILS below for full license and warranty information.
+
+
+
+OVERVIEW
+
+epub2pdf is a command-line tool that quickly generates PDF files 
+from EPUB ebooks. It allows the user to specify page size, fonts, 
+margins, and default paragraph alignment.
+
+The motivation for this program was my purchase of the 
+Foxit eSlick e-reader device. For the first year or so 
+of its existence on the market, it only supported PDF 
+and plain-text files.
+
+I began writing this software so I could comfortably read 
+more of my ebook collection on the device.
+
+As a courtesy to fellow eSlick users, the margin and page-size
+defaults are optimized for that device.
+
+
+KNOWN ISSUES / LIMITATIONS
+
+All of the following issues are slated for resolution in
+future releases.
+
+- CSS support is limited to detecting bold and italic modes.
+On the other hand, even this meagre capability is more CSS
+than Foxit's EPUB renderer can handle, so it is hard for me 
+to be too ashamed of this one.
+
+- Having said that... bold/italic text sometimes has an extra 
+space at either end.
+
+- The ePub table of contents is not reproduced as a "bookmark"
+structure in the output PDF.
+
+- Fails to render most characters outside the Western European 
+canon (i.e. no Greek, no Cyrillic, etc.)
+
+
+SYSTEM REQUIREMENTS
+
+Tested on Windows Vista and Fedora Linux. Will
+theoretically work on any platform for which
+Java 6 is available.
+
+The Java Runtime Environment, version 6 or later,
+must be installed. Retrieve it at (http://www.java.com/).
+
+The "java" or "java.exe" binary must be in your path,
+which is usually done for you with JRE installation.
+
+
+QUICK START
+
+Unzip epub2pdf-0.1.zip in a location of your choice. It will create
+a directory called "epub2pdf".
+
+Open a command prompt, change to the new "epub2pdf" directory, 
+and invoke the program like so:
+
+(Windows) 
+epub2pdf.bat <path-to-epub-file>
+
+(Linux / OSX / etc.)
+chmod +x ./epub2pdf.sh 
+./epub2pdf.sh <path-to-epub-file>
+
+By default, the PDF is formatted for the Foxit eSlick Reader and is
+placed in your home directory.
+
+
+CONFIGURATION
+
+Output behavior is controlled by the simple properties file 
+"epub2pdf.properties" in the main "epub2pdf" directory. 
+You can control margins, page size, default fonts, and output
+directory. Comments in the file explain the syntax.
+
+Windows users: use FORWARD SLASHES (/) when specifying the 
+output directory, or Java will choke.
+
+
+CONTACT
+
+General inquiries / suggestions: <info@epub2pdf.com>
+
+Report problems to <bugs@epub2pdf.com>. If possible and relevant,
+attach the epub and pdf in question, and the full text 
+of any error messages. At this early stage I am particularly
+keen to stamp out any remaining "showstopper" bugs that cause
+the PDF creation process to fail entirely.
+
+If you find this software useful, please consider a modest
+donation via PayPal to <donate@epub2pdf.com>.
+
+
+LICENSE DETAILS
+
+epub2pdf is released under the GNU General Public License,
+version 3 or later. See file "COPYING" for full license text.
+
+In compliance with the terms of the GPL, a full source distribution 
+(epub2pdf and all included libraries) is available at 
+<http://epub2pdf.com>.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.

@@ -98,7 +98,6 @@ public class TextFactory {
     }
 
     public static boolean fontFamilyRegistered(String fam) {
-    	fam = fam.trim();
         return getFontFamilies().contains(fam);
     }
 
@@ -221,7 +220,7 @@ public class TextFactory {
     }
 
     public static boolean setDefaultFontByName(String fontName) {
-        fontName = fontName.toLowerCase();
+        fontName = fontName.toLowerCase().trim();
         if (TextFactory.fontFamilyRegistered(fontName)) {
             Font newDefaultFont = FontFactory.getFont(fontName, FontFactory.defaultEncoding, BaseFont.EMBEDDED);
             newDefaultFont.setSize(defaultFontSize);

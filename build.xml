@@ -47,11 +47,9 @@
         <mkdir dir="dist/epub2pdf/lib"/>
         <copy todir="dist/epub2pdf/lib" flatten="true">
             <path refid="compile.classpath"/>
-            <fileset dir="lib">
-                <include name="fonts"/>
-            </fileset>
         </copy>
-
+    	<mkdir dir="dist/epub2pdf/lib/fonts"/>
+    	
         <copy todir="dist/epub2pdf/etc">
             <fileset dir="etc">
                 <include name="xhtml/*"/>

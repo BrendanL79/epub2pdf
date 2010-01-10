@@ -31,10 +31,16 @@ import java.util.SortedSet;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
 
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
+
 import com.amphisoft.epub.Epub;
+import com.amphisoft.epub.metadata.Ncx;
 import com.amphisoft.epub.metadata.Opf;
+import com.amphisoft.epub.metadata.Ncx.NavPoint;
 import com.amphisoft.epub2pdf.content.TextFactory;
 import com.amphisoft.epub2pdf.content.XhtmlHandler;
+import com.amphisoft.epub2pdf.metadata.TocTreeNode;
 import com.amphisoft.pdf.ITPageSize;
 import com.amphisoft.util.units.Length;
 import com.lowagie.text.Document;
@@ -42,6 +48,8 @@ import com.lowagie.text.DocumentException;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Rectangle;
 import com.lowagie.text.RectangleReadOnly;
+import com.lowagie.text.pdf.PdfDestination;
+import com.lowagie.text.pdf.PdfOutline;
 import com.lowagie.text.pdf.PdfWriter;
 
 public class Converter {
@@ -233,28 +241,40 @@ public class Converter {
         epubIn = Epub.fromFile(epubPath);
 
         Opf opf = epubIn.getOpf();
-
         List<String> contentPaths = opf.spineHrefs();
         List<File> contentFiles = new ArrayList<File>();
         for (String path : contentPaths) {
             contentFiles.add(new File(epubIn.getContentRoot(),path));
         }
+        Ncx ncx = epubIn.getNcx();
+        List<NavPoint> ncxToc = ncx.getNavPointsNested();
+        TocTreeNode rootTocNode = new TocTreeNode();
+        TreeModel tocTree = new DefaultTreeModel(rootTocNode);
+        
+        String dcTitle = opf.getDcTitle();
+        rootTocNode.setDisplayedTitle(dcTitle);
 
         Document doc = new Document();
         boolean pageSizeOK = doc.setPageSize(pageSize);
         boolean marginsOK = doc.setMargins(marginLeftPt, marginRightPt, marginTopPt, marginBottomPt);
 
         System.err.println("Writing PDF to " + outputFile.getAbsolutePath());
-        PdfWriter.getInstance(doc, new FileOutputStream(outputFile));
-
+        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(outputFile));
+        rootTocNode.setPdfDestination(new PdfDestination(PdfDestination.FIT));
+        PdfOutline outline = null;
 
         if (!(pageSizeOK && marginsOK)) {
             throw new RuntimeException("Failed to set PDF page size a/o margins");
         }
 
         for (File file : contentFiles) {
-            doc.newPage();
-            //printlnerr("parse : " + file.getCanonicalPath());
+            if (!(doc.isOpen())) {
+                doc.open();
+                doc.newPage();
+                outline = writer.getRootOutline();
+                new PdfOutline(outline, rootTocNode.getPdfDestination(), rootTocNode.getDisplayedTitle());
+            }
+
             XhtmlHandler.process(file.getCanonicalPath(), doc);
         }
 

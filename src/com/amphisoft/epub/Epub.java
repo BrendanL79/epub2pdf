@@ -129,6 +129,7 @@ public class Epub {
                 ncxFile.getCanonicalPath() +
                 " unexpectedly missing");
         }
+        ncx = Ncx.fromFile(ncxFile.getCanonicalPath());
     }
 
     public void cleanup() {

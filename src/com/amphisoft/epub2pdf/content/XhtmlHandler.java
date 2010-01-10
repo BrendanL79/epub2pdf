@@ -563,11 +563,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
                 img.setAlt(alt);
             }
         } catch (Exception e) {
-            if (alt == null) {
-                document.add(new Paragraph(e.getMessage()));
-            } else {
-                document.add(new Paragraph("Image: " + alt));
-            }
+        	System.err.println("epub2pdf: problem adding image: " + e.getMessage());
             return;
         }
         String property;
@@ -629,11 +625,6 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
         currentFile = xhtml;
         this.controlOpenClose = false;
         document = docInProgress;
-
-        if (!(document.isOpen())) {
-            document.open();
-            document.newPage();
-        }
 
         parseXhtml(xhtml);
     }

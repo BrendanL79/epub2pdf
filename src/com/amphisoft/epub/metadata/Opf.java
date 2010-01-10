@@ -35,6 +35,7 @@ import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -172,6 +173,17 @@ public class Opf {
         }
     }
 
+    public String getDcTitle() {
+    	String dcTitle = "";
+    	for(MetadataItem mI : metadata.items) {
+    		if("dc:title".equals(mI.name)) {
+    			dcTitle = mI.textContent;
+    			break;
+    		}
+    	}
+    	return dcTitle;
+    }
+    
     public static Opf fromFile(String path) {
 
         try {
@@ -221,7 +233,7 @@ public class Opf {
         }
     }
 
-    private void setMetadata(EnhancedNode metadataNode) {
+    private void setMetadata(Node metadataNode) {
         NamedNodeMap attrs = metadataNode.getAttributes();
         int attrCount = attrs.getLength();
         for (int i = 0; i < attrCount; i++) {
@@ -236,16 +248,23 @@ public class Opf {
                 metadata.optionalIdAttribute = new SpecifiedAttribute(attrName,attrValue);
             }
         }
-        Iterable<Node> metaNodesAll = metadataNode.getChildNodesIterable();
+        NodeList metanodeChildren = metadataNode.getChildNodes();
         List<Node> metaNodes = new ArrayList<Node>();
-        for (Node n : metaNodesAll) {
+        for(int i = 0; i < metanodeChildren.getLength(); i++) {
+        	Node n = metanodeChildren.item(i);
             if (n.getNodeType() == Node.ELEMENT_NODE) {
                 metaNodes.add(n);
             }
         }
         for (Node mNode : metaNodes) {
-            MetadataItem item = new MetadataItem(
-                mNode.getNodeName(),mNode.getNodeValue());
+        	String mdName = mNode.getNodeName();
+        	String mdValue = "";
+        	Node mdKid = mNode.getFirstChild();
+        	if(mdKid != null && mdKid.getNodeType() == Node.TEXT_NODE) {
+        		mdValue = mdKid.getNodeValue();
+        	}
+        	
+            MetadataItem item = new MetadataItem(mdName,mdValue);
             metadata.items.add(item);
         }
     }

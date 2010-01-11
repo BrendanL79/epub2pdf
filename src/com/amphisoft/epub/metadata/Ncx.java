@@ -114,46 +114,6 @@ public class Ncx {
         ncxDocTitle.appendChild(ncxDocTitleText);
     }
 
-    /* *
-     * Causes the specified NavPoint to become the "next sibling" of its direct ancestor at the root level of the navMap.
-     * @param nId id of the NavPoint to be moved outward
-     * @return boolean indicating success or failure. Failure occurs when the ID lookup fails. If the specified NavPoint is already at root level the method does nothing but returns true.
-     */
-    /*
-    private boolean moveNavPointToRootLevelById(String nId) {
-    	//TODO implement
-    	return false;
-    }
-    */
-
-    /* *
-     * Removes a NavPoint from the children of its current parent and adds it to the children of a new parent.
-     * @param targetId id of the NavPoint to be moved.
-     * @param newParentId id of the NavPoint of which the target NavPoint is to become a child.
-     * @param newNextSiblingId id of the NavPoint that will become the target NavPoint's new "next sibling." May be null, in which case target will be added to the end of its new parent's child list.
-     * @return boolean indicating success or failure. Failure occurs if an ID lookup fails or if newNextSiblingId refers to a NavPoint that is not among the children of the "newParentId" NavPoint
-     */
-    /*
-    private boolean moveNavPointToNewParentByIds(String targetId, String newParentId, String newNextSiblingId) {
-    	//TODO implement
-    	return false;
-    }
-    */
-
-    /*
-    private NavPoint removeNavPointById(String nId) {
-    	NavPoint target = findNavPointById(nId);
-    	if(ncxNavMap.contains(target)) {
-    		ncxNavMap.remove(target);
-    	}
-    	else {
-    		NavPoint targetParent = target.getParent();
-    		targetParent.children.remove(target);
-    	}
-    	return target;
-    }
-    */
-
     public org.w3c.dom.Document toDOM() {
         try {
             initializeDOMDocument();
@@ -240,16 +200,29 @@ public class Ncx {
         }
     }
 
-    public NavPoint findNavPointById(String s) {
-        return Ncx.findNavPointById(ncxNavMap, s);
+    /**
+     * Lookup NavPoint by string consisting of relative content filename and (optionally) anchor
+     * in standard URL format ("filename.xhtml#anchor").
+     * @param s
+     * @return
+     */
+    public NavPoint findNavPoint(String s) {
+        return Ncx.findNavPoint(ncxNavMap, s);
     }
 
-    public static NavPoint findNavPointById(List<NavPoint> navPoints, String s) {
+    /**
+     * Lookup NavPoint by string consisting of relative content filename and (optionally) anchor
+     * in standard URL format ("filename.xhtml#anchor").
+     * @param navPoints
+     * @param s
+     * @return
+     */
+    public static NavPoint findNavPoint(List<NavPoint> navPoints, String s) {
         for (NavPoint nP : navPoints) {
-            if (nP.id.equals(s)) {
+            if (nP.contentSrc.equals(s)) {
                 return nP;
             } else {
-                NavPoint n2 = findNavPointById(nP.children(), s);
+                NavPoint n2 = findNavPoint(nP.children(), s);
                 if (n2 != null)
                     return n2;
             }
@@ -270,7 +243,7 @@ public class Ncx {
             System.out.print(nP.id + "\t");
             for (int i = 1; i < nP.getHierarchyLevel(); i++)
                 System.out.print("\t");
-            System.out.println(nP.labelText());
+            System.out.println(nP.getNavLabelText());
             printNavPointTree(nP.children());
         }
     }
@@ -361,15 +334,15 @@ public class Ncx {
             return id;
         }
 
-        public String labelText() {
+        public String getNavLabelText() {
             return navLabelText;
         }
 
-        public String srcPath() {
+        public String getSourcePath() {
             return contentSrc;
         }
 
-        public int playOrder() {
+        public int getPlayOrderIndex() {
             return playOrder;
         }
 

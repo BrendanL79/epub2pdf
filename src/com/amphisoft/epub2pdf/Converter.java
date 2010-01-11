@@ -247,21 +247,19 @@ public class Converter {
             contentFiles.add(new File(epubIn.getContentRoot(),path));
         }
         Ncx ncx = epubIn.getNcx();
-        List<NavPoint> ncxToc = ncx.getNavPointsNested();
-        TocTreeNode rootTocNode = new TocTreeNode();
-        TreeModel tocTree = new DefaultTreeModel(rootTocNode);
+        List<NavPoint> ncxToc = ncx.getNavPointsFlat();
         
-        String dcTitle = opf.getDcTitle();
-        rootTocNode.setDisplayedTitle(dcTitle);
-
+        for(NavPoint nP : ncxToc) {
+        	System.err.println(nP.getSourcePath());
+        }
+        
         Document doc = new Document();
         boolean pageSizeOK = doc.setPageSize(pageSize);
         boolean marginsOK = doc.setMargins(marginLeftPt, marginRightPt, marginTopPt, marginBottomPt);
 
         System.err.println("Writing PDF to " + outputFile.getAbsolutePath());
         PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(outputFile));
-        rootTocNode.setPdfDestination(new PdfDestination(PdfDestination.FIT));
-        PdfOutline outline = null;
+        PdfOutline bookmarkRoot = null;
 
         if (!(pageSizeOK && marginsOK)) {
             throw new RuntimeException("Failed to set PDF page size a/o margins");
@@ -271,10 +269,13 @@ public class Converter {
             if (!(doc.isOpen())) {
                 doc.open();
                 doc.newPage();
-                outline = writer.getRootOutline();
-                new PdfOutline(outline, rootTocNode.getPdfDestination(), rootTocNode.getDisplayedTitle());
+                bookmarkRoot = writer.getRootOutline();
             }
-
+            NavPoint fileLevelNP = Ncx.findNavPoint(ncxToc, file.getName());
+            if(fileLevelNP != null) {
+            	PdfDestination here = new PdfDestination(PdfDestination.FIT);
+            	new PdfOutline(bookmarkRoot, here, fileLevelNP.getNavLabelText());
+            }
             XhtmlHandler.process(file.getCanonicalPath(), doc);
         }
 

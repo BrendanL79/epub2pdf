@@ -600,22 +600,8 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 
         if (imgOrigHeight > imgMaxHeight || imgOrigWidth > imgMaxWidth) {
             img.scaleToFit(imgMaxWidth, imgMaxHeight);
-            //printlnerr(img.toString());
         }
 
-        /*
-        int w = 0;
-        property = attributes.getValue(XhtmlTags.PLAINWIDTH);
-        if (property != null) {
-        	w = Integer.parseInt(property);
-        	int h = 0;
-        	property = attributes.getValue(XhtmlTags.PLAINHEIGHT);
-        	if (property != null) {
-        		h = Integer.parseInt(property);
-        		img.scaleAbsolute(w, h);
-        	}
-        }
-         */
         document.add(img);
 
     }

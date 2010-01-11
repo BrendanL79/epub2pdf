@@ -239,6 +239,7 @@ public class Converter {
         File outputFile = new File(outputDir.getAbsolutePath() + File.separator + pdfFilename);
 
         epubIn = Epub.fromFile(epubPath);
+        XhtmlHandler.setSourceEpub(epubIn);
 
         Opf opf = epubIn.getOpf();
         List<String> contentPaths = opf.spineHrefs();
@@ -248,10 +249,6 @@ public class Converter {
         }
         Ncx ncx = epubIn.getNcx();
         List<NavPoint> ncxToc = ncx.getNavPointsFlat();
-        
-        for(NavPoint nP : ncxToc) {
-        	System.err.println(nP.getSourcePath());
-        }
         
         Document doc = new Document();
         boolean pageSizeOK = doc.setPageSize(pageSize);
@@ -270,6 +267,7 @@ public class Converter {
                 doc.open();
                 doc.newPage();
                 bookmarkRoot = writer.getRootOutline();
+                XhtmlHandler.setBookmarkRoot(bookmarkRoot);
             }
             NavPoint fileLevelNP = Ncx.findNavPoint(ncxToc, file.getName());
             if(fileLevelNP != null) {

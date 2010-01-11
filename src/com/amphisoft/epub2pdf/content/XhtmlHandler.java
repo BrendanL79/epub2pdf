@@ -39,7 +39,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import com.amphisoft.epub.Epub;
 import com.amphisoft.epub.content.XhtmlTags;
+import com.amphisoft.epub.metadata.Ncx.NavPoint;
 import com.amphisoft.epub2pdf.style.CssParser;
 import com.amphisoft.epub2pdf.style.CssStyleMap;
 import com.amphisoft.epub2pdf.style.StyleSpecText;
@@ -60,6 +62,9 @@ import com.lowagie.text.Rectangle;
 import com.lowagie.text.RectangleReadOnly;
 import com.lowagie.text.TextElementArray;
 import com.lowagie.text.html.SAXmyHtmlHandler;
+import com.lowagie.text.pdf.PdfDestination;
+import com.lowagie.text.pdf.PdfOutline;
+
 import static com.amphisoft.util.Print.*;
 /**
  *
@@ -92,6 +97,8 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
     protected static float marginLeftPt = 4.0f;
 
     private static CssParser cssParser;
+    private static Epub sourceEpub = null;
+    private static PdfOutline bookmarkRoot = null;
 
     static {
         cssParser = new CssParser();
@@ -226,17 +233,19 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
     public void startElement(String uri, String localName, String qName,
                              Attributes attributes) {
         currentSaxElemId = saxElemIdCounter;
-        SaxElement sE = new SaxElement(qName, saxElemIdCounter++);
-        saxElementStack.push(sE);
-        //printlnerr("PUSH:" + sE);
-        //printlnerr("entering startElement " + localName + "; stack: " + stackStatus());
-
+        
         Map<String,String> attrMap = new HashMap<String,String>();
         // parse attributes
         for (int ai = 0; ai < attributes.getLength(); ai++) {
             attrMap.put(attributes.getQName(ai), attributes.getValue(ai));
         }
-
+        String idAttr = attrMap.get("id");
+        if(idAttr == null) {
+        	idAttr = "";
+        }
+        SaxElement sE = new SaxElement(qName, saxElemIdCounter++, idAttr);
+        saxElementStack.push(sE);
+        
         try {
             currentITextStyle = Font.NORMAL;
 
@@ -325,7 +334,6 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
                     if (name != null) {
                         anchor.setName(name);
                     }
-
                     stack.push(anchor);
                 } else if (XhtmlTags.ORDEREDLIST.equals(qName)) {
                     stack.push(new List(List.ORDERED, 10));
@@ -368,10 +376,12 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 
     @Override
     public void endElement(String uri, String localName, String qName) {
-        //SaxElement closedElement =
+        SaxElement closedElement =
         saxElementStack.pop();
         //printlnerr("POP :" + saxElementStack.pop());
-
+        
+        String idAttr = closedElement.idAttr;
+        
         //printlnerr("entering endElement " + localName + "; stack: " + stackStatus());
         try {
             //printlnerr("</" + qName + ">");
@@ -381,6 +391,8 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
                     if (XhtmlTags.H[i].equals(qName)) {
                         currentITextStyle ^= Font.BOLD;
                         stack.push(specialParagraph);
+                    	if(idAttr != null && !idAttr.isEmpty())
+                    		addToBookmarks(currentFile, closedElement.idAttr);
                         flushStack();
                         specialParagraph = null;
                         return;
@@ -393,6 +405,8 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
                     || XhtmlTags.PRE.equals(qName)
                     || XhtmlTags.PARAGRAPH.equals(qName)
                     || XhtmlTags.DIV.equals(qName)) {
+                	if(idAttr != null && !idAttr.isEmpty())
+                		addToBookmarks(currentFile, closedElement.idAttr);
                     flushStack();
                 } else if (XhtmlTags.TT.equals(qName)) {
                     updateStack();
@@ -447,6 +461,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
                 }
 
             }
+
             //printlnerr("leaving endElement " + localName + "; stack: " + stackStatus());
         } catch (Exception e) {
             e.printStackTrace();
@@ -466,7 +481,6 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
             }
 
         }
-
 
     }
 
@@ -494,7 +508,11 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 
                 } catch (EmptyStackException es) {
                     if (element != null) {
-                        document.add(element);
+                    	document.add(element);
+                    	if(element instanceof TextElementArray) {
+                    		checkTextElementArrayForTocAnchors(
+                    				document, (TextElementArray) element);
+                    	}
                     }
                 }
             }
@@ -505,7 +523,71 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
         }
     }
 
-    /**
+    private void checkTextElementArrayForTocAnchors(Document doc,
+			TextElementArray tea) throws DocumentException {
+		if(tea instanceof Anchor) {
+			Anchor a = (Anchor) tea;
+			addAnchorToBookmarks(a);
+		}
+		else {
+			if(tea.type() == Element.PARAGRAPH) {
+				Paragraph p = (Paragraph) tea;
+				for(int i = 0; i < p.size(); i++) {
+					Object o = p.get(i);
+					if(o instanceof TextElementArray) {
+						checkTextElementArrayForTocAnchors(doc, (TextElementArray) o);
+					}
+				}
+			}
+		}
+	}
+
+    private void addToBookmarks(String currentFile, String aName) { // curFileCP, aName
+    	// TODO right now the PDF TOC is flat. The following will have to be 
+    	//      revised to support multilevel nesting.
+    	//      Rather than invoking the PdfOutline constructor directly,
+    	//      create and use a class or set of classes that basically
+    	//      mirror the Ncx NavPoint tree but with nodes that carry the
+    	//      generated PdfOutline object along with the NavPoint
+    	try {
+			StringBuilder lookupSB = new StringBuilder();
+			String currentFileBaseName = new File(currentFile).getName();
+			String currentFileEpubRooted = null;
+			for(String spineRef : sourceEpub.getOpf().spineHrefs()) {
+				if(spineRef.endsWith(currentFileBaseName)) {
+					currentFileEpubRooted = spineRef;
+				}
+			}
+			if(currentFileEpubRooted == null) {
+				throw new Exception();
+			}
+			lookupSB.append(currentFileEpubRooted);
+			if(aName != null && !aName.isEmpty()) {
+				lookupSB.append('#');
+				lookupSB.append(aName);
+			}
+			String lookup = lookupSB.toString();
+			NavPoint nP = sourceEpub.getNcx().findNavPoint(lookup);
+			if(nP != null) {
+            	PdfDestination here = new PdfDestination(PdfDestination.FIT);
+            	new PdfOutline(bookmarkRoot, here, nP.getNavLabelText());
+			}
+			else {
+				//System.err.println("NCX lookup fail: " + lookup);
+			}    		
+    	}catch(Exception e) {
+			System.err.println("Failed to update PDF bookmarks with Anchor " + aName);
+    	}
+    }
+    
+	private void addAnchorToBookmarks(Anchor a) {
+		if(sourceEpub != null && bookmarkRoot != null && a.getReference() == null) {
+			String aName = a.getName();
+			addToBookmarks(currentFile, aName);
+		}
+	}
+
+	/**
      * If the current Chunk is not null, its constituents are forwarded to the stack and it is then made
      * null.
      */
@@ -666,11 +748,13 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
     private static class SaxElement {
         final String qName;
         final int id;
+        final String idAttr;
         StyleSpecText textStyles;
 
-        SaxElement(String q, int i) {
-            qName = q;
+        SaxElement(String q, int i, String idA) {
+        	qName = q;
             id = i;
+            idAttr = idA;	
         }
 
         void applyTextStyles(StyleSpecText sst) {
@@ -690,4 +774,12 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
         defaultAlignment = itextAlignmentCode;
         TextFactory.setDefaultITAlignment(ITAlignment.getValueForInt(itextAlignmentCode));
     }
+
+	public static void setSourceEpub(Epub epubIn) {
+		sourceEpub = epubIn;
+	}
+	public static void setBookmarkRoot(PdfOutline outline) {
+		bookmarkRoot = outline;
+	}
+
 }

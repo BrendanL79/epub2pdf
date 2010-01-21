@@ -31,18 +31,15 @@ import java.util.SortedSet;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
 
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeModel;
-
 import com.amphisoft.epub.Epub;
 import com.amphisoft.epub.metadata.Ncx;
 import com.amphisoft.epub.metadata.Opf;
 import com.amphisoft.epub.metadata.Ncx.NavPoint;
 import com.amphisoft.epub2pdf.content.TextFactory;
 import com.amphisoft.epub2pdf.content.XhtmlHandler;
-import com.amphisoft.epub2pdf.metadata.TocTreeNode;
 import com.amphisoft.pdf.ITPageSize;
 import com.amphisoft.util.units.Length;
+
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Paragraph;

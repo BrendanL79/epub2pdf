@@ -245,7 +245,11 @@ public class Converter {
             contentFiles.add(new File(epubIn.getContentRoot(),path));
         }
         Ncx ncx = epubIn.getNcx();
-        List<NavPoint> ncxToc = ncx.getNavPointsFlat();
+        
+        List<NavPoint> ncxToc = new ArrayList<NavPoint>();
+        if(ncx != null) {
+        	ncxToc.addAll(ncx.getNavPointsFlat());
+        }
         
         Document doc = new Document();
         boolean pageSizeOK = doc.setPageSize(pageSize);

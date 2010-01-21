@@ -30,6 +30,8 @@ import java.util.regex.Matcher;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.xerces.parsers.DOMParser;
+import org.apache.xml.resolver.CatalogManager;
+import org.apache.xml.resolver.tools.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.DocumentType;
@@ -50,9 +52,16 @@ public class Ncx {
     private static DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
     private DocumentBuilder docBuilder;
     private DocumentType ncxDocType;
+    private ResolvingXMLReader xmlReader;
 
+    public Ncx() { this("etc/ncx/catalog.xml"); }
+    private Ncx(String catalogPath)
     {
+    	CatalogManager.getStaticManager().setIgnoreMissingProperties(true);
+    	xmlReader = new ResolvingXMLReader();
+    	
         try {
+        	xmlReader.getCatalog().parseCatalog(catalogPath);
             docBuilder  = docBuilderFactory.newDocumentBuilder();
             ncxDocType = docBuilder.getDOMImplementation().
                          createDocumentType(
@@ -99,6 +108,7 @@ public class Ncx {
     }
 
     private void initializeDOMDocument() {
+    	docBuilder.setEntityResolver(xmlReader.getEntityResolver());
         doc = docBuilder.getDOMImplementation().createDocument("http://www.daisy.org/z3986/2005/ncx/", "ncx", ncxDocType);
         Element ncxRoot = doc.getDocumentElement();
         ncxRoot.setAttribute("xmlns", "http://www.daisy.org/z3986/2005/ncx/");
@@ -259,10 +269,12 @@ public class Ncx {
                 org.apache.xerces.parsers.SAXParser parser = new org.apache.xerces.parsers.SAXParser();
 
                 parser.setContentHandler(ncx.getContentHandler());
-
+                parser.setEntityResolver(ncx.xmlReader.getEntityResolver());
+                parser.setDTDHandler(ncx.xmlReader.getDTDHandler());
                 parser.parse(new InputSource(path));
 
                 DOMParser domParser = new DOMParser();
+                domParser.setEntityResolver(ncx.xmlReader.getEntityResolver());
                 domParser.parse(path);
                 org.w3c.dom.Document ncxDoc = domParser.getDocument();
                 NodeList navPoints = ncxDoc.getElementsByTagName("navPoint");
@@ -276,6 +288,7 @@ public class Ncx {
                 return ncx;
             } catch (Exception e) {
                 System.err.println(e.getMessage());
+                e.printStackTrace();
                 return null;
             }
         } else {

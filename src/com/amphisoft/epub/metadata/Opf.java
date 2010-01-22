@@ -1,5 +1,5 @@
 /*
-epub2pdf, version 0.1 - Copyright 2010 Brendan C. LeFebvre
+epub2pdf, version 0.2 - Copyright 2010 Brendan C. LeFebvre
 
 This file is part of epub2pdf.
 
@@ -331,12 +331,29 @@ public class Opf {
             }
         }
         for (Node ref : referenceNodes) {
-            NamedNodeMap attrs = ref.getAttributes();
-            String href = attrs.getNamedItem("href").getNodeValue();
-            String title = attrs.getNamedItem("title").getNodeValue();
+        	NamedNodeMap attrs = ref.getAttributes();
+
+        	Node hrefNode = attrs.getNamedItem("href");
+        	String href = "";
+        	if(hrefNode != null)
+        		href = hrefNode.getNodeValue();
+        	else
+        		continue;
+            
+        	Node titleNode = attrs.getNamedItem("title");
+        	String title = "";
+            if(titleNode != null)
+            	title = attrs.getNamedItem("title").getNodeValue();
 
             GuideItem g;
-            String declaredMetadataType = attrs.getNamedItem("type").getNodeValue();
+            
+            String declaredMetadataType = "";
+            Node typeNode = attrs.getNamedItem("type");
+            if(typeNode != null)
+            	declaredMetadataType = typeNode.getNodeValue();
+            else
+            	continue;
+            
             GuideItemType giType = GuideItemType.getByAttrValue(
                                        declaredMetadataType);
 
@@ -344,7 +361,6 @@ public class Opf {
                 g = new GuideItem(href, giType, title);
                 guideItems.add(g);
             } else {
-                //throw new IllegalArgumentException(
                 printlnerr("Opf: ignoring unrecognized guide item type " + declaredMetadataType);
             }
 

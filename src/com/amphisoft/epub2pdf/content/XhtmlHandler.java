@@ -1,5 +1,5 @@
 /*
-epub2pdf, version 0.1 - Copyright 2010 Brendan C. LeFebvre
+epub2pdf, version 0.2 - Copyright 2010 Brendan C. LeFebvre
 
 This file is part of epub2pdf.
 
@@ -310,9 +310,11 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 				} 
 				else {
 					if (xmlElementId != null) {
+						flushStack();
 						Anchor dest = textFactory.newAnchor();
 						dest.setName(xmlElementId);
 						stack.push(dest);
+						flushStack();
 					}
 					for (int i = 0; i < 6; i++) {
 						if (XhtmlTags.H[i].equals(qName)) {
@@ -350,12 +352,15 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 						Paragraph p = textFactory.newParagraphPre();
 						stack.push(p);
 					} else if (XhtmlTags.ORDEREDLIST.equals(qName)) {
-						stack.push(new List(List.ORDERED, 10));
+						List oList = new List(List.ORDERED, 10); 
+						stack.push(oList);
 					} else if (XhtmlTags.UNORDEREDLIST.equals(qName)) {
-						stack.push(new List(List.UNORDERED, 10));
+						List uList = new List(List.UNORDERED, 10);
+						stack.push(uList);
 					} else if (XhtmlTags.LISTITEM.equals(qName)) {
 						freshParagraph = true;
-						stack.push(new ListItem());
+						ListItem listItem = new ListItem();
+						stack.push(listItem);
 					} else if (XhtmlTags.IMAGE.equals(qName)) {
 						handleImage(attributes);
 					} else if (XhtmlTags.LINK.equals(qName)) {
@@ -407,7 +412,9 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 				for (int i = 0; i < 6; i++) {
 					if (XhtmlTags.H[i].equals(qName)) {
 						currentITextStyle ^= Font.BOLD;
-						stack.push(specialParagraph);
+						if(specialParagraph != null) {
+							stack.push(specialParagraph);
+						}
 						flushStack();
 						specialParagraph = null;
 						return;
@@ -438,7 +445,8 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 					} finally {
 						if (listItem != null && list != null)
 							list.add(listItem);
-						stack.push(list);
+						if (list != null)
+							stack.push(list);
 					}
 				} else if (XhtmlTags.ANCHOR.equals(qName)) {
 					Anchor anchor = null;
@@ -509,6 +517,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 				try {
 					element = (Element) stack.pop();
 					if (!(element instanceof TextElementArray)) {
+						System.err.print("");
 						System.err.println("Orphaned element: [" + element.toString() + "]");
 					}
 					TextElementArray previous = (TextElementArray) stack.pop();
@@ -583,7 +592,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 			String lookup = lookupSB.toString();
 			NavPoint nP = sourceEpub.getNcx().findNavPoint(lookup);
 			if(nP != null) {
-				System.err.println("addToBookmarks " + currentFile + "#" + aName);
+				//System.err.println("addToBookmarks " + currentFile + "#" + aName);
 				PdfDestination here = new PdfDestination(PdfDestination.FIT);
 				new PdfOutline(bookmarkRoot, here, nP.getNavLabelText());
 			}
@@ -596,7 +605,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 	}
 
 	private void addAnchorToBookmarks(Anchor a) {
-		if(sourceEpub != null && bookmarkRoot != null && a.getReference() == null) {
+		if(sourceEpub != null && bookmarkRoot != null && a.getReference() == null && a.getName() != null) {
 			String aName = a.getName();
 			addToBookmarks(currentFile, aName);
 		}
@@ -715,6 +724,9 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 	void parseXhtml(String xhtml) throws MalformedURLException, IOException, SAXException {
 
 		File xhtmlFile = new File(xhtml);
+		
+		System.err.println("Processing " + xhtmlFile.getName());
+		
 		xhtmlDir = xhtmlFile.getParentFile();
 
 		CatalogManager.getStaticManager().setIgnoreMissingProperties(true);

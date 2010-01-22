@@ -1,5 +1,5 @@
 /*
-epub2pdf, version 0.1 - Copyright 2010 Brendan C. LeFebvre
+epub2pdf, version 0.2 - Copyright 2010 Brendan C. LeFebvre
 
 This file is part of epub2pdf.
 
@@ -58,7 +58,6 @@ public class Converter {
     protected static Rectangle pageSize = ITPageSize.FOXIT_ESLICK;
     Epub epubIn;
     File outputDir = new File(System.getProperty("user.home"));
-    //private Pdf pdfOut;
 
     public void applyProperties(Properties props) {
         SortedSet<String> propsSorted = new TreeSet<String>();

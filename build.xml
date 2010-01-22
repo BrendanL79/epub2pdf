@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="dist" name="epub2pdf">
 
-    <property name="epub2pdf.version" value="SVN"/>
+    <property name="epub2pdf.version" value="0.2"/>
     
     <path id="compile.classpath">
         <fileset dir="lib">
@@ -31,7 +31,7 @@
         </javac>
     </target>
 
-    <target name="clean">
+    <target name="clean" depends="clean-compile">
         <delete dir="dist/epub2pdf"/>
     </target>
 

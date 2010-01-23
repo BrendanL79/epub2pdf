@@ -232,6 +232,11 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 	@Override
 	public void startElement(String uri, String localName, String qName,
 			Attributes attributes) {
+		/*
+		if("ol".equals(qName) || "ul".equals(qName) || "li".equals(qName)) {
+			System.err.print(qName + " ");
+		}
+		*/
 		currentSaxElemId = saxElemIdCounter;
 
 		Map<String,String> attrMap = new HashMap<String,String>();
@@ -399,11 +404,20 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 
 	@Override
 	public void endElement(String uri, String localName, String qName) {
+		/*
 		SaxElement closedElement =
 			saxElementStack.pop();
-		//printlnerr("POP :" + saxElementStack.pop());
-
-
+		printlnerr("POP :" + saxElementStack.pop());
+		 */
+		/*
+		if("li".equals(qName)) {
+			System.err.print("/" + qName + " ");
+		}
+		
+		if("ol".equals(qName) || "ul".equals(qName)) {
+			System.err.println("/" + qName + " ");
+		}
+		*/
 		//printlnerr("entering endElement " + localName + "; stack: " + stackStatus());
 		try {
 			//printlnerr("</" + qName + ">");
@@ -434,10 +448,21 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 					ListItem listItem = null;
 					List list = null;
 					try {
-						listItem = (ListItem) stack.pop();
+						Element stackTop = (Element) stack.pop();
 						try {
-							list = (List) stack.pop();
-						} catch (EmptyStackException e) {
+							listItem = (ListItem) stackTop;
+						} catch (ClassCastException cce) {
+							stack.push(stackTop);
+						}
+						try {
+							Element stackTop2 = (Element) stack.pop();
+							try {
+							list = (List) stackTop2;
+							} catch (ClassCastException cce2) {
+								stack.push(stackTop2);
+							}
+						}
+						catch (EmptyStackException e) {
 							//printlnerr("*** EMPTY STACK (List)");
 						}
 					} catch (EmptyStackException e) {
@@ -450,8 +475,15 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 					}
 				} else if (XhtmlTags.ANCHOR.equals(qName)) {
 					Anchor anchor = null;
+					Element stackTop = null;
 					try {
-						anchor = (Anchor) stack.pop();
+						stackTop = (Element) stack.pop();
+						try {
+						anchor = (Anchor) stackTop;
+						} catch (ClassCastException cce) {
+							if(stackTop != null)
+								stack.push(stackTop);
+						}
 						TextElementArray previous = (TextElementArray) stack
 						.pop();
 						previous.add(anchor);
@@ -459,7 +491,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 					} catch (EmptyStackException es) {
 						if (anchor != null)
 							document.add(anchor);
-					}
+					} 
 				} else if (XhtmlTags.HTML.equals(qName)) {
 					flushStack();
 					if (this.controlOpenClose) {

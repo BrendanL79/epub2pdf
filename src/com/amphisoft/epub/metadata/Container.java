@@ -24,6 +24,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import org.apache.xerces.parsers.DOMParser;
+import org.apache.xml.resolver.CatalogManager;
+import org.apache.xml.resolver.tools.ResolvingXMLReader;
+import org.w3c.dom.NodeList;
+
 /**
  * The OCF container file component of an EPUB. <br />
  *
@@ -85,25 +90,53 @@ public class Container {
 
     public static Container fromFile(String path) {
         try {
-            BufferedReader fR = new BufferedReader(new FileReader(new File(path)));
-            String line = fR.readLine();
+        	CatalogManager.getStaticManager().setIgnoreMissingProperties(true);
+        	ResolvingXMLReader xmlReader = new ResolvingXMLReader();
+        	
             Container c = null;
-            while (line != null) {
-                if (line.contains("rootfile") && line.contains("full-path=\"")) {
-                    int pathFirstIdx = line.lastIndexOf("full-path=\"") + "full-path=\"".length();
-                    String tail = line.substring(pathFirstIdx);
-                    int pathLastIdx = tail.indexOf("\"");
-                    String rootPath = tail.substring(0, pathLastIdx);
-                    //System.out.println("Root-Path: " + rootPath);
-                    c = new Container(rootPath);
-                }
-                line = fR.readLine();
+            
+            DOMParser domParser = new DOMParser();
+            domParser.setEntityResolver(xmlReader.getEntityResolver());
+            domParser.parse(path);
+            org.w3c.dom.Document containerDoc = domParser.getDocument();
+            org.w3c.dom.NodeList rootfilesNodeList = containerDoc.getElementsByTagName("rootfiles");
+            if(rootfilesNodeList.getLength() < 1) {
+            	throw new RuntimeException("Missing required rootfiles node in container XML");
             }
-            fR.close();
+            else 
+            {
+            	org.w3c.dom.Node rootfilesNode = rootfilesNodeList.item(0);
+            	org.w3c.dom.NodeList rootfileNodeList = rootfilesNode.getChildNodes();
+            	if(rootfileNodeList.getLength() < 1) {
+            		throw new RuntimeException("Rootfiles node in container XML has no children");
+            	}
+            	else {
+            		org.w3c.dom.Node rootfileNode = null;
+            		for(int rfi = 0; rfi < rootfileNodeList.getLength(); rfi++) {
+            			org.w3c.dom.Node n = rootfileNodeList.item(rfi);
+            			if("rootfile".equals(n.getLocalName())) {
+            				rootfileNode = n;
+            				break;
+            			}
+            		}
+            		if(rootfileNode != null) {
+            			org.w3c.dom.NamedNodeMap rfAttrs = rootfileNode.getAttributes();
+            			org.w3c.dom.Node mediaTypeNode = rfAttrs.getNamedItem("media-type");
+            			org.w3c.dom.Node fullPathNode = rfAttrs.getNamedItem("full-path");
+            			if(mediaTypeNode == null || fullPathNode == null) {
+            				throw new RuntimeException("rootfile node missing one or both required attributes {full-path, media-type}");
+            			}
+            			else {
+            				String rootPath = fullPathNode.getTextContent();
+            				c = new Container(rootPath);
+            			}
+            		}
+            	}
+            }
             return c;
         } catch (Exception e) {
-            System.err.println(e.getLocalizedMessage());
-            return null;
+        	RuntimeException rE = new RuntimeException(e);
+            throw rE;
         }
     }
 

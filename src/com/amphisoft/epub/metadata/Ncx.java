@@ -168,14 +168,15 @@ public class Ncx {
         int childCount = children.getLength();
         for (int c = 0; c < childCount; c++) {
             Node child = children.item(c);
-            if (child.getNodeName().equals("navLabel")) {
+            if (child.getNodeType() != org.w3c.dom.Node.TEXT_NODE) {
+            if (child.getLocalName().equals("navLabel")) {
                 NodeList labelChildren = child.getChildNodes();
                 int labelChildCount = labelChildren.getLength();
                 LABELCHILDREN:
                 for (int d = 0; d < labelChildCount; d++) {
                     Node tN = labelChildren.item(d);
-                    if (tN.getNodeName().equals("text")) {
-                        labelText = tN.getFirstChild().getNodeValue();
+                    if (tN.getNodeType() != org.w3c.dom.Node.TEXT_NODE && tN.getLocalName().equals("text")) {
+                        labelText = tN.getTextContent();
                         break LABELCHILDREN;
                     }
                 }
@@ -183,11 +184,12 @@ public class Ncx {
                 for (int t = 0; t < depth; t++) {
                     //System.out.print(" ");
                 }
-            } else if (child.getNodeName().equals("content")) {
+            } else if (child.getLocalName().equals("content")) {
                 NamedNodeMap contentAttribs = child.getAttributes();
                 src = contentAttribs.getNamedItem("src").getNodeValue();
-            } else if (child.getNodeName().equals("navPoint")) {
+            } else if (child.getLocalName().equals("navPoint")) {
                 childNavPointNodes.add(child);
+            }
             }
         }
         NavPoint newNavPoint = new NavPoint(id,labelText,src);
@@ -277,7 +279,7 @@ public class Ncx {
                 domParser.setEntityResolver(ncx.xmlReader.getEntityResolver());
                 domParser.parse(path);
                 org.w3c.dom.Document ncxDoc = domParser.getDocument();
-                NodeList navPoints = ncxDoc.getElementsByTagName("navPoint");
+                NodeList navPoints = ncxDoc.getElementsByTagNameNS("*","navPoint");
 
                 int navPointCount = navPoints.getLength();
 
@@ -287,7 +289,6 @@ public class Ncx {
 
                 return ncx;
             } catch (Exception e) {
-                System.err.println(e.getMessage());
                 e.printStackTrace();
                 return null;
             }

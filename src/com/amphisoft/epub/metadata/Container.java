@@ -18,16 +18,13 @@ along with epub2pdf.  If not, see <http://www.gnu.org/licenses/>.
 */
 package com.amphisoft.epub.metadata;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
 import org.apache.xerces.parsers.DOMParser;
 import org.apache.xml.resolver.CatalogManager;
 import org.apache.xml.resolver.tools.ResolvingXMLReader;
-import org.w3c.dom.NodeList;
 
 /**
  * The OCF container file component of an EPUB. <br />
@@ -99,7 +96,7 @@ public class Container {
             domParser.setEntityResolver(xmlReader.getEntityResolver());
             domParser.parse(path);
             org.w3c.dom.Document containerDoc = domParser.getDocument();
-            org.w3c.dom.NodeList rootfilesNodeList = containerDoc.getElementsByTagName("rootfiles");
+            org.w3c.dom.NodeList rootfilesNodeList = containerDoc.getElementsByTagNameNS("*","rootfiles");
             if(rootfilesNodeList.getLength() < 1) {
             	throw new RuntimeException("Missing required rootfiles node in container XML");
             }

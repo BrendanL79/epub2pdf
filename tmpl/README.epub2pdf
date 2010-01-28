@@ -36,8 +36,8 @@ which is usually done for you with JRE installation.
 
 QUICK START
 
-Unzip epub2pdf-0.1.zip in a location of your choice. It will create
-a directory called "epub2pdf".
+Unzip the epub2pdf zipfile in a location of your choice. 
+It will create a directory called "epub2pdf".
 
 Open a command prompt, change to the new "epub2pdf" directory, 
 and invoke the program like so:
@@ -49,8 +49,8 @@ epub2pdf.bat <path-to-epub-file>
 chmod +x ./epub2pdf.sh 
 ./epub2pdf.sh <path-to-epub-file>
 
-By default, the PDF is formatted for the Foxit eSlick Reader and is
-placed in your home directory.
+By default, the PDF is formatted for the Foxit eSlick Reader 
+and is placed in your home directory.
 
 
 CONFIGURATION
@@ -79,6 +79,8 @@ not work. Copy the .TTF/.TTC file(s) for your desired fonts into
 epub2pdf/lib/fonts, then update the default.font property in
 epub2pdf.properties with the human-readable name of your font
 (e.g. "calibri", "garamond", etc.)
+
+- Numerous minor bugfixes.
 
 
 KNOWN ISSUES / LIMITATIONS

@@ -39,8 +39,8 @@
         <copy todir="dist/epub2pdf">
             <fileset dir="tmpl">
                 <include name="epub2pdf.*"/>
-                <include name="COPYING"/>
-                <include name="README"/>
+                <include name="COPYING.epub2pdf"/>
+                <include name="README.epub2pdf"/>
             </fileset>
         </copy>
         
@@ -48,8 +48,8 @@
         <copy todir="dist/epub2pdf/lib" flatten="true">
             <path refid="compile.classpath"/>
         </copy>
-    	<mkdir dir="dist/epub2pdf/lib/fonts"/>
-    	
+        <mkdir dir="dist/epub2pdf/lib/fonts"/>
+        
         <copy todir="dist/epub2pdf/etc">
             <fileset dir="etc">
                 <include name="xhtml/*"/>

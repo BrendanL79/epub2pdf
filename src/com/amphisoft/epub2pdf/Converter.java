@@ -256,6 +256,7 @@ public class Converter {
 
         System.err.println("Writing PDF to " + outputFile.getAbsolutePath());
         PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(outputFile));
+        writer.setStrictImageSequence(true);
         PdfOutline bookmarkRoot = null;
 
         if (!(pageSizeOK && marginsOK)) {
@@ -271,6 +272,7 @@ public class Converter {
             }
             NavPoint fileLevelNP = Ncx.findNavPoint(ncxToc, file.getName());
             if(fileLevelNP != null) {
+            	doc.newPage();
             	PdfDestination here = new PdfDestination(PdfDestination.FIT);
             	new PdfOutline(bookmarkRoot, here, fileLevelNP.getNavLabelText());
             }
@@ -278,6 +280,7 @@ public class Converter {
         }
 
         doc.close();
+        System.err.println("PDF written to " + outputFile.getAbsolutePath());
         epubIn.cleanup();
     }
 

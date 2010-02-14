@@ -1,4 +1,4 @@
-epub2pdf v0.2 - 28 January 2010 - Copyright 2010 Brendan C. LeFebvre.
+epub2pdf v0.3 - 14 February 2010 - Copyright 2010 Brendan C. LeFebvre.
 
 See LICENSE DETAILS below for full license and warranty information.
 
@@ -65,6 +65,33 @@ output directory, or Java will choke.
 
 
 CHANGES
+
+Since v0.2:
+
+- Fixed an issue with "sticky formatting", where bold or italic 
+text specified by an inline tag would persist for the remainder 
+of the enclosing block element.
+
+- Fixed an issue that triggered extra paragraph breaks at some 
+inline tags.
+
+- Images now appear at the exact place they are declared, rather 
+than being postponed when they do not fit on the page. (If the 
+image is too large to fit on the remainder of the page, a new 
+page is created first.)
+
+- A new page is created in the PDF when the parser encounters 
+a file or element specified in the NCX.
+
+- CSS parser can now handle numeric specification of font-weight 
+(>=700 bold, else normal).
+
+- Correct version number now appears in console at program start.
+
+- Various minor improvements to source code organization and 
+cosmetics.
+
+
 
 Since v0.1:
 

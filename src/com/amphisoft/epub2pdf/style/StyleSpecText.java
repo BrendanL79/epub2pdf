@@ -47,4 +47,12 @@ public class StyleSpecText {
     public boolean isItalic() {
         return italic;
     }
+
+    @Override
+    public String toString() {
+    	char b = bold ? 'B' : 'b';
+    	char i = italic ? 'I' : 'i';
+    	String s = "" + b + i;
+    	return s;
+    }
 }

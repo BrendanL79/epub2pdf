@@ -142,11 +142,21 @@ public class CssHandler extends DefaultDocumentHandler {
         //SacLexicalUnit.lookupName(luType) + "|"
         //);
 
+        String luTypeStr = SacLexicalUnit.lookupName(luType);
+        
         if ("font-weight".equals(name)) {
+        	try {
             String weight = value.getStringValue();
             if (weight.startsWith("bold")) {
                 latestTextSpec.setBold(true);
             }
+        	}
+        	catch(IllegalStateException ies) {
+        		int weight = value.getIntegerValue();
+        		if(weight >= 700) {
+        			latestTextSpec.setBold(true);
+        		}
+        	}
         }
 
         if ("font-style".equals(name)) {

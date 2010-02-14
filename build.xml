@@ -68,7 +68,7 @@
                 <include name="org/w3c/dom/**" />
             </fileset>
             <manifest>
-                <attribute name="Main-Class" value="com.amphisoft.epub2pdf.Converter"/>
+                <attribute name="Main-Class" value="com.amphisoft.epub2pdf.Epub2Pdf"/>
                 <attribute name="Class-Path" value="lib/batik-css.jar lib/batik-util.jar lib/commons-lang-2.4.jar lib/iText.jar lib/resolver.jar lib/sac.jar lib/xercesImpl.jar"/>
             </manifest>
             <indexjars>

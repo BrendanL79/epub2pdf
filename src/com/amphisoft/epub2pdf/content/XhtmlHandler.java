@@ -1,5 +1,5 @@
 /*
-epub2pdf, version 0.2 - Copyright 2010 Brendan C. LeFebvre
+epub2pdf, version 0.3 - Copyright 2010 Brendan C. LeFebvre
 
 This file is part of epub2pdf.
 

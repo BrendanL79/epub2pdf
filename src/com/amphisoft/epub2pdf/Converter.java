@@ -56,6 +56,22 @@ public class Converter {
     protected static float marginBottomPt = 8.0f;
     protected static float marginLeftPt = 8.0f;
     protected static Rectangle pageSize = ITPageSize.FOXIT_ESLICK;
+    private static Properties epub2pdfProps;
+    
+    private static void loadProperties() {
+    	epub2pdfProps = new Properties();
+        String propsFilename = "epub2pdf.properties";
+        try {
+            epub2pdfProps.load(new FileInputStream(propsFilename));
+        } catch (IOException e) {
+            printlnerr("IOException reading properties from " + propsFilename + "; continuing anyway");
+        }    	
+    }
+
+    static {
+    	loadProperties();
+    }
+    
     Epub epubIn;
     File outputDir = new File(System.getProperty("user.home"));
 
@@ -288,18 +304,9 @@ public class Converter {
      * @param args
      */
     public static void main(String[] args) throws Exception { //IOException,DocumentException
-        Properties epub2pdfProps = new Properties();
-
-        if (args.length < 1)
+       if (args.length < 1)
             usage();
         else {
-            String propsFilename = "epub2pdf.properties";
-            try {
-                epub2pdfProps.load(new FileInputStream(propsFilename));
-            } catch (IOException e) {
-                printlnerr("IOException reading properties from " + propsFilename + "; continuing anyway");
-            }
-
             for (String infile : args) {
                 Converter c = new Converter();
                 c.applyProperties(epub2pdfProps);
@@ -310,5 +317,13 @@ public class Converter {
 
     public static void usage() {
         println("Usage: com.amphisoft.epub2pdf.Converter <path-to-epub>");
+    }
+    
+    /**
+     * @return a new Properties object populated with the properties 
+     * as read from the epub2pdf.properties file.
+     */
+    public static Properties getProperties() {
+    	return new Properties(epub2pdfProps);
     }
 }

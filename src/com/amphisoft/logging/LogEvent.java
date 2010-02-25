@@ -23,21 +23,52 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import static com.amphisoft.logging.Priority.*;
 
 public class LogEvent {
+	
+	private static final String NO_MESSAGE = "(no log message provided)";
+	
+	public final Priority priority;
+	public final String message;
+	
     LogEventProperties props = new LogEventProperties();
 
-    List<String> getPropNames() {
-
+    public List<String> getPropNames() {
         List<String> propNames = new ArrayList<String>();
-        for (Property p : props.propSet) {
-            propNames.add(p.key);
-        }
+        propNames.addAll(props.propMap.keySet());
         return propNames;
     }
 
-    String getPropertyValue(String k) {
+    public String getPropertyValue(String k) {
         return props.getProp(k);
+    }
+    
+    LogEvent() {
+    	this(INFO,NO_MESSAGE);
+    }
+    
+    public LogEvent(String message) {
+    	this(INFO,message);
+    }
+    
+    LogEvent(Priority priority) {
+    	this(priority, NO_MESSAGE);
+    }
+    
+    public LogEvent(Priority priority, String message) {
+    	this.priority = priority;
+    	this.message = message;
+    }
+    
+    public boolean addProperty(String key, String value) {
+    	if(props.propMap.keySet().contains(key)) {
+    		return false;
+    	}
+    	else {
+    		props.addProp(key, value);
+    		return true;
+    	}
     }
 }
 

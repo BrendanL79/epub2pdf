@@ -15,25 +15,11 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with epub2pdf.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package com.amphisoft.logging;
 
-import static com.amphisoft.util.Print.*;
-
-public class StderrLogger implements LogEventSubscriber {
-
-    @Override
-    public void notify(LogEvent ev) {
-        StringBuilder outSB = new StringBuilder("");
-        for (String propName : ev.getPropNames()) {
-            if (outSB.length()>0) {
-                outSB.append(",");
-            }
-            outSB.append(propName);
-            outSB.append(",");
-            outSB.append(ev.getPropertyValue(propName));
-        }
-        printlnerr(outSB.toString());
-    }
-
+public class StderrLogger extends PrintStreamLogger implements LogEventSubscriber {
+	public StderrLogger() {
+		super(System.err);
+	}
 }

@@ -1,5 +1,5 @@
 /*
-epub2pdf, version 0.3 - Copyright 2010 Brendan C. LeFebvre
+epub2pdf, version 0.2 - Copyright 2010 Brendan C. LeFebvre
 
 This file is part of epub2pdf.
 
@@ -19,6 +19,7 @@ along with epub2pdf.  If not, see <http://www.gnu.org/licenses/>.
 package com.amphisoft.epub2pdf.content;
 
 import static com.amphisoft.util.StringManip.nothingButSpaces;
+
 import static com.amphisoft.util.StringManip.removeLineBreaks;
 import static com.amphisoft.util.StringManip.changeLineBreaksToSpaces;
 
@@ -26,11 +27,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.EmptyStackException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 import org.apache.xml.resolver.Catalog;
 import org.apache.xml.resolver.CatalogManager;
@@ -45,6 +42,9 @@ import com.amphisoft.epub.metadata.Ncx.NavPoint;
 import com.amphisoft.epub2pdf.style.CssParser;
 import com.amphisoft.epub2pdf.style.CssStyleMap;
 import com.amphisoft.epub2pdf.style.StyleSpecText;
+import com.amphisoft.logging.LogEvent;
+import com.amphisoft.logging.LogEventPublisher;
+import com.amphisoft.logging.LogEventSubscriber;
 import com.amphisoft.pdf.ITAlignment;
 import com.amphisoft.pdf.ITPageSize;
 import com.lowagie.text.Anchor;
@@ -71,8 +71,11 @@ import static com.amphisoft.util.Print.*;
  * @author brendanl
  *
  */
-public class XhtmlHandler extends SAXmyHtmlHandler {
+public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher {
 
+	private Collection<LogEventSubscriber> _subscribers = 
+		new ArrayList<LogEventSubscriber>();
+	
 	protected Chunk currentChunk = null;
 	protected Document document;
 
@@ -195,7 +198,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 			if (content.length() > 0) {
 				if (currentChunk != null) {
 					if (specialParagraph != null || currentChunk.getFont().compareTo(font) != 0) {
-						pushToStack(currentChunk);
+						stack.push(currentChunk);
 						currentChunk = null;
 					} else {
 						currentChunk.append(content);
@@ -236,7 +239,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 		if("ol".equals(qName) || "ul".equals(qName) || "li".equals(qName)) {
 			System.err.print(qName + " ");
 		}
-		 */
+		*/
 		currentSaxElemId = saxElemIdCounter;
 
 		Map<String,String> attrMap = new HashMap<String,String>();
@@ -249,7 +252,6 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 			idAttr = "";
 		}
 		SaxElement sE = new SaxElement(qName, saxElemIdCounter++, idAttr);
-		//printlnerr("startElement: " + sE.toString());
 		saxElementStack.push(sE);
 
 		try {
@@ -312,15 +314,15 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 					if (xmlElementId != null) {
 						anchor.setName(xmlElementId);
 					}
-					pushToStack(anchor);
+					stack.push(anchor);
 				} 
 				else {
 					if (xmlElementId != null) {
-						//flushStack();
+						flushStack();
 						Anchor dest = textFactory.newAnchor();
 						dest.setName(xmlElementId);
-						pushToStack(dest);
-						//flushStack();
+						stack.push(dest);
+						flushStack();
 					}
 					for (int i = 0; i < 6; i++) {
 						if (XhtmlTags.H[i].equals(qName)) {
@@ -338,38 +340,35 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 						p.setIndentationLeft(50);
 						p.setIndentationRight(20);
 						p.setAlignment(defaultAlignment);
-						pushToStack(p);
+						stack.push(p);
 					} else if (XhtmlTags.PARAGRAPH.equals(qName)) {
 						flushStack();
 						freshParagraph = true;
 						Paragraph p = textFactory.newParagraph();
-						pushToStack(p);
+						stack.push(p);
 					} else if (XhtmlTags.DIV.equals(qName)) {
 						if (stack.size() > 0 && stack.peek().getChunks().size()>0) {
 							flushStack();
 						}
 						if (stack.size() == 0) {
-							Paragraph brandNewParagraph = textFactory.newParagraph();
-							pushToStack(brandNewParagraph);
+							stack.push(textFactory.newParagraph());
 							freshParagraph = true;
 						}
 					} else if (XhtmlTags.PRE.equals(qName)) {
 						flushStack();
 						freshParagraph = true;
 						Paragraph p = textFactory.newParagraphPre();
-						pushToStack(p);
+						stack.push(p);
 					} else if (XhtmlTags.ORDEREDLIST.equals(qName)) {
-						flushStack();
 						List oList = new List(List.ORDERED, 10); 
-						pushToStack(oList);
+						stack.push(oList);
 					} else if (XhtmlTags.UNORDEREDLIST.equals(qName)) {
-						flushStack();
 						List uList = new List(List.UNORDERED, 10);
-						pushToStack(uList);
+						stack.push(uList);
 					} else if (XhtmlTags.LISTITEM.equals(qName)) {
 						freshParagraph = true;
 						ListItem listItem = new ListItem();
-						pushToStack(listItem);
+						stack.push(listItem);
 					} else if (XhtmlTags.IMAGE.equals(qName)) {
 						handleImage(attributes);
 					} else if (XhtmlTags.LINK.equals(qName)) {
@@ -408,19 +407,20 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 
 	@Override
 	public void endElement(String uri, String localName, String qName) {
-		@SuppressWarnings("unused")
+		/*
 		SaxElement closedElement =
 			saxElementStack.pop();
-		//printlnerr("endElement:" + closedElement.toString());
+		printlnerr("POP :" + saxElementStack.pop());
+		 */
 		/*
 		if("li".equals(qName)) {
 			System.err.print("/" + qName + " ");
 		}
-
+		
 		if("ol".equals(qName) || "ul".equals(qName)) {
-			printlnerr("/" + qName + " ");
+			System.err.println("/" + qName + " ");
 		}
-		 */
+		*/
 		//printlnerr("entering endElement " + localName + "; stack: " + stackStatus());
 		try {
 			//printlnerr("</" + qName + ">");
@@ -430,7 +430,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 					if (XhtmlTags.H[i].equals(qName)) {
 						currentITextStyle ^= Font.BOLD;
 						if(specialParagraph != null) {
-							pushToStack(specialParagraph);
+							stack.push(specialParagraph);
 						}
 						flushStack();
 						specialParagraph = null;
@@ -451,18 +451,18 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 					ListItem listItem = null;
 					List list = null;
 					try {
-						Element stackTop = (Element) popFromStack();
+						Element stackTop = (Element) stack.pop();
 						try {
 							listItem = (ListItem) stackTop;
 						} catch (ClassCastException cce) {
-							pushToStack(stackTop);
+							stack.push(stackTop);
 						}
 						try {
-							Element stackTop2 = (Element) popFromStack();
+							Element stackTop2 = (Element) stack.pop();
 							try {
-								list = (List) stackTop2;
+							list = (List) stackTop2;
 							} catch (ClassCastException cce2) {
-								pushToStack(stackTop2);
+								stack.push(stackTop2);
 							}
 						}
 						catch (EmptyStackException e) {
@@ -473,29 +473,27 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 					} finally {
 						if (listItem != null && list != null)
 							list.add(listItem);
-						if (list != null) {
-							pushToStack(list);
-						}
+						if (list != null)
+							stack.push(list);
 					}
 				} else if (XhtmlTags.ANCHOR.equals(qName)) {
 					Anchor anchor = null;
 					Element stackTop = null;
 					try {
-						stackTop = (Element) popFromStack();
+						stackTop = (Element) stack.pop();
 						try {
-							anchor = (Anchor) stackTop;
+						anchor = (Anchor) stackTop;
 						} catch (ClassCastException cce) {
-							if(stackTop != null) {
-								pushToStack(stackTop);
-							}
+							if(stackTop != null)
+								stack.push(stackTop);
 						}
-						if(anchor != null) {
-							pushToStack(anchor);
-						}
+						TextElementArray previous = (TextElementArray) stack
+						.pop();
+						previous.add(anchor);
+						stack.push(previous);
 					} catch (EmptyStackException es) {
-						if (anchor != null) {
-							pushToStack(anchor);
-						}
+						if (anchor != null)
+							document.add(anchor);
 					} 
 				} else if (XhtmlTags.HTML.equals(qName)) {
 					flushStack();
@@ -537,19 +535,9 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 					currentITextStyle |= Font.ITALIC;
 				}
 			}
-			else {
-				currentITextStyle = Font.NORMAL;
-			}
+
 		}
-	}
-	
-	@SuppressWarnings("unused")
-	private void debugElementStack(Stack<Element> elemStack) {
-		for(Element elem : elemStack) {
-			debugElementNoBreak(elem); 
-			printerr(" | ");
-		}
-		printlnerr("");
+
 	}
 
 	/**
@@ -557,41 +545,31 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 	 */
 	private void flushStack() {
 		//printlnerr("entering flushStack; stack: " + stackStatus());
-		Stack<Element> reverseStack = new Stack<Element>();
 		try {
 			//printlnerr("*** FLUSH COMMENCE ***");
-			//debugElementStack(stack);
 			while (stack.size() > 0) {
 				Element element = null;
 				try {
-					element = (Element) popFromStack();
+					element = (Element) stack.pop();
 					if (!(element instanceof TextElementArray)) {
 						System.err.print("");
-						printlnerr("Orphaned element: [" + element.toString() + "]");
+						System.err.println("Orphaned element: [" + element.toString() + "]");
 					}
-					else if(element instanceof Anchor) {
-						reverseStack.push(element);
-					}
-					else {
-						TextElementArray previous = (TextElementArray) popFromStack();
-						if (previous != null) {
-							if(previous instanceof Anchor) {
-								reverseStack.push(element);
-								reverseStack.push(previous);
-							}
-							else {
-								previous = appendToTEA(previous,element);
-								pushToStack(previous);
-							}
-						} 
-						else {
-							pushToStack(element);
-						}
+					TextElementArray previous = (TextElementArray) stack.pop();
+					if (previous != null) {
+						previous.add(element);
+						stack.push(previous);
+					} else {
+						stack.push(element);
 					}
 
 				} catch (EmptyStackException es) {
 					if (element != null) {
-						reverseStack.push(element);
+						document.add(element);
+						if(element instanceof TextElementArray) {
+							checkTextElementArrayForTocAnchors(
+									document, (TextElementArray) element);
+						}
 					}
 				}
 			}
@@ -600,52 +578,6 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 			e.printStackTrace();
 			printerr("");
 		}
-		
-		//printlnerr("*** ADDING TO PDF ***");
-		//debugElementStack(reverseStack);
-		
-		try {
-			printerr("");
-			while(reverseStack.size() > 0)
-			{
-				Element elemToAdd = reverseStack.pop();
-				if(elemToAdd instanceof TextElementArray) {
-					checkTextElementArrayForTocAnchors(
-							document, (TextElementArray) elemToAdd);
-				}
-				addToDocument(elemToAdd);
-				
-			}
-		} 
-		catch (DocumentException docEx) {
-				docEx.printStackTrace();
-		}
-
-	}
-
-	private TextElementArray appendToTEA(TextElementArray previous,
-			Element element) {
-		//debugAppendToTEA(previous,element);
-		@SuppressWarnings("unused")
-		boolean success = previous.add(element);
-		//debugAppendedTEA(previous,success);
-		return previous;
-	}
-
-	@SuppressWarnings("unused")
-	private void debugAppendToTEA(TextElementArray tea, Element element) {
-		printerr("Appending to TEA: ");
-		debugElementNoBreak(tea);
-		printerr(" + ");
-		debugElement(element);
-	}
-
-	@SuppressWarnings("unused")
-	private void debugAppendedTEA(TextElementArray tea, boolean success) {
-		printerr("Append to TEA ");
-		printerr(success ? "succeeded: " : "FAILED: ");
-		printerr("TEA now: ");
-		debugElement(tea);
 	}
 
 	private void checkTextElementArrayForTocAnchors(Document doc,
@@ -695,8 +627,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 			String lookup = lookupSB.toString();
 			NavPoint nP = sourceEpub.getNcx().findNavPoint(lookup);
 			if(nP != null) {
-				document.newPage();
-				//printlnerr("addToBookmarks " + currentFile + "#" + aName);
+				//System.err.println("addToBookmarks " + currentFile + "#" + aName);
 				PdfDestination here = new PdfDestination(PdfDestination.FIT);
 				new PdfOutline(bookmarkRoot, here, nP.getNavLabelText());
 			}
@@ -704,7 +635,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 				//throw new Exception("NCX lookup fail: " + lookup);
 			}    		
 		}catch(Exception e) {
-			//printlnerr("Failed to update PDF bookmarks with Anchor " + aName + ": " + e.getMessage());
+			//System.err.println("Failed to update PDF bookmarks with Anchor " + aName + ": " + e.getMessage());
 		}
 	}
 
@@ -715,40 +646,35 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 		}
 	}
 
-	private java.util.List<String> getNoNewSpaceTagsList() {
-		String[] noNewSpaceTags = {"a","span","em","strong","small","br"};
-		java.util.List<String> noNewSpaceTagsList = new ArrayList<String>();
-		for (String tag : noNewSpaceTags) {
-			noNewSpaceTagsList.add(tag);
-		}
-		return noNewSpaceTagsList;
-
-	}
-
 	/**
 	 * If the current Chunk is not null, its constituents are forwarded to the stack and it is then made
 	 * null.
 	 */
 	private void updateStack() {
 		//printlnerr("entering updateStack; stack: " + stackStatus());
-		java.util.List<String> noNewSpaceTagsColl =	getNoNewSpaceTagsList();
+		String[] noNewSpaceTags = {"a","span","em","strong","small","br"};
+		java.util.List<String> noNewSpaceTagsColl = new ArrayList<String>();
+		for (String tag : noNewSpaceTags) {
+			noNewSpaceTagsColl.add(tag);
+		}
 
 		if (currentChunk != null) {
 			TextElementArray current;
 			try {
-				current = (TextElementArray) popFromStack();
+				current = (TextElementArray) stack.pop();
 				if ((!(current instanceof Paragraph)
 						|| !((Paragraph) current).isEmpty())
 						&&
 						!(noNewSpaceTagsColl.contains(currentTag))) {
-					current = appendToTEA(current, new Chunk(" "));
+					//printlnerr("*** CHUNK { } (auto)");
+					current.add(new Chunk(" "));
 				}
 			} catch (EmptyStackException ese) {
 				current = textFactory.newParagraph();
 			}
 			//printlnerr("*** CHUNK {" + currentChunk.getContent() + "}");
 			current.add(currentChunk);
-			pushToStack(current);
+			stack.push(current);
 			currentChunk = null;
 		}
 		//printlnerr("leaving updateStack; stack: " + stackStatus());
@@ -770,18 +696,15 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 		if (url == null)
 			return;
 		Image img = null;
-		String imgSimpleName = "";
 		try {
 			File imgFile = new File(xhtmlDir,url);
 			String imgPath = imgFile.getCanonicalPath();
-			imgSimpleName = imgFile.getName();
 			img = Image.getInstance(imgPath);
 			if (alt != null) {
 				img.setAlt(alt);
 			}
 		} catch (Exception e) {
-			printlnerr("epub2pdf: problem adding image " + 
-					imgSimpleName + ": " + e.getMessage());
+			System.err.println("epub2pdf: problem adding image: " + e.getMessage());
 			return;
 		}
 		String property;
@@ -819,7 +742,9 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 		if (imgOrigHeight > imgMaxHeight || imgOrigWidth > imgMaxWidth) {
 			img.scaleToFit(imgMaxWidth, imgMaxHeight);
 		}
-		addToDocument(img);
+
+		document.add(img);
+
 	}
 
 	public XhtmlHandler(String xhtml, Document docInProgress) throws MalformedURLException, IOException, SAXException {
@@ -834,9 +759,9 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 	void parseXhtml(String xhtml) throws MalformedURLException, IOException, SAXException {
 
 		File xhtmlFile = new File(xhtml);
-
-		printlnerr("Processing " + xhtmlFile.getName());
-
+		
+		System.err.println("Processing " + xhtmlFile.getName());
+		
 		xhtmlDir = xhtmlFile.getParentFile();
 
 		CatalogManager.getStaticManager().setIgnoreMissingProperties(true);
@@ -857,32 +782,24 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 	}
 
 
-	static String getAbridgedContents(Element elem) {
+	@SuppressWarnings("unchecked")
+	static String elementContentsAbridged(Element el) {
 		String content = "";
-		if(elem != null)
-			content += elem.toString();
+		ArrayList chunkList = el.getChunks();
+		for (Object o : chunkList) {
+			Chunk ch = (Chunk) o;
+			content += ch.getContent();
+		}
 		int len = content.length();
 		if (len>25) {
 			StringBuilder sB = new StringBuilder();
 			sB.append(content.substring(0, 10));
 			sB.append(" ... ");
 			sB.append(content.substring(len-10));
-			content = sB.toString();
+			return sB.toString();
+		} else {
+			return content;
 		}
-		if(elem instanceof Anchor) {
-			Anchor elemAnchor = (Anchor) elem;
-			StringBuilder sB = new StringBuilder();
-			sB.append('_');
-			sB.append(elemAnchor.getName());
-			if(elemAnchor.getReference() != null) {
-				sB.append("->");
-				sB.append(elemAnchor.getReference());
-			}
-			sB.append(":");
-			sB.append(content);
-			content = sB.toString();
-		}
-		return content;
 	}
 	/*
     public static void setDefaultFont(String fontName) {
@@ -890,7 +807,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
     }
 	 */
 
-	private static class SaxElement {
+	static class SaxElement {
 		final String qName;
 		final int id;
 		final String idAttr;
@@ -908,13 +825,13 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 
 		@Override
 		public String toString() {
-			StringBuilder sB = new StringBuilder();
-			sB.append(qName);
-			sB.append('_');
-			sB.append(Integer.toString(id));
+			StringBuilder sB = new StringBuilder(qName);
+			sB.append("_");
+			sB.append(id);
 			if(idAttr != null && idAttr.length()>0) {
-				sB.append("_id:");
+				sB.append("(");
 				sB.append(idAttr);
+				sB.append(")");
 			}
 			if(textStyles != null) {
 				sB.append('_');
@@ -939,64 +856,20 @@ public class XhtmlHandler extends SAXmyHtmlHandler {
 		bookmarkRoot = outline;
 	}
 
-	private Element pushToStack(Element elem) {
-		//debugPushing(elem);
-		if(elem instanceof Anchor && stack.size() > 0) {
-			Element stackTop = stack.peek();
-			if(stackTop instanceof Paragraph) {
-				((Paragraph) stackTop).add(elem);
-				return elem;
-			}
-		}
-		return stack.push(elem);
+	@Override
+	public boolean subscribe(LogEventSubscriber sub) {
+		return _subscribers.add(sub);
 	}
 
-	private Element popFromStack() throws EmptyStackException {
-		//debugPopping(stack.peek());
-		return stack.pop();
+	@Override
+	public boolean unsubscribe(LogEventSubscriber sub) {
+		return _subscribers.remove(sub);
 	}
-
-	private boolean addToDocument(Element elem) throws DocumentException {
-		//debugAdding(elem);
-		return document.add(elem);
-	}
-
-	@SuppressWarnings("unused")
-	private void debugPushing(Element elem) {
-		printerr("Pushing: ");
-		debugElement(elem);
-	}
-
-	@SuppressWarnings("unused")
-	private void debugPopping(Element elem) {
-		printerr("Popping: ");
-		debugElement(elem);
-	}
-
-	@SuppressWarnings("unused")
-	private void debugAdding(Element elem) {
-		printerr("Adding: ");
-		debugElement(elem);
-	}
-
-	private void debugElement(Element elem) {
-		printerr(getClassOf(elem));
-		printlnerr(getAbridgedContents(elem));
-	}
-
-	private void debugElementNoBreak(Element elem) {
-		printerr(getClassOf(elem));
-		printerr(getAbridgedContents(elem));
-	}
-
-
-	private String getClassOf(Element elem) {
-		if(elem == null) {
-			return "<null>";
-		}
-		else {
-			Object elemObj = (Object) elem;
-			return elemObj.getClass().getSimpleName();
+	
+	private void notifySubscribers(LogEvent ev) {
+		for(LogEventSubscriber sub : _subscribers) {
+			sub.notify(ev);
 		}
 	}
+
 }

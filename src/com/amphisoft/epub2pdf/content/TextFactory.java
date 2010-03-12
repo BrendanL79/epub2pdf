@@ -60,35 +60,37 @@ public class TextFactory {
 		System.err.println(famList);
 	}
 
-	protected static Font defaultFont;
-	protected static Font defaultFontMono;
-	protected static float defaultFontSize = 12f;
-	protected static float defaultFontMonoSize = 10f;
-	protected static float defaultLeadingMultiplier = 1.25f;
-	protected static ITAlignment defaultITAlignment = ITAlignment.LEFT;
+	protected static Font _defaultFont;
+	protected static Font _defaultFontMono;
+	protected static float _defaultFontSize = 12f;
+	protected static float _defaultFontMonoSize = 10f;
+	protected static float _defaultLeadingMultiplier = 1.25f;
+	protected static ITAlignment _defaultITAlignment = ITAlignment.LEFT;
 
 	static void setDefaultFont(Font defaultFont) {
-		TextFactory.defaultFont = defaultFont;
+		_defaultFont = new Font(defaultFont);
 	}
 
 	static void setDefaultFontMono(Font defaultFontMono) {
-		TextFactory.defaultFontMono = new Font(defaultFontMono);
+		_defaultFontMono = new Font(defaultFontMono);
 	}
 
-	static void setDefaultFontSize(float defaultFontSize) {
-		TextFactory.defaultFontSize = defaultFontSize;
+	public static void setDefaultFontSize(float defaultFontSize) {
+		_defaultFontSize = defaultFontSize;
+		_defaultFont.setSize(_defaultFontSize);
 	}
 
-	static void setDefaultFontMonoSize(float defaultFontMonoSize) {
-		TextFactory.defaultFontMonoSize = defaultFontMonoSize;
+	public static void setDefaultFontMonoSize(float defaultFontMonoSize) {
+		_defaultFontMonoSize = defaultFontMonoSize;
+		_defaultFontMono.setSize(_defaultFontMonoSize);
 	}
 
 	static void setDefaultLeadingMultiplier(float defaultLeadingMultiplier) {
-		TextFactory.defaultLeadingMultiplier = defaultLeadingMultiplier;
+		_defaultLeadingMultiplier = defaultLeadingMultiplier;
 	}
 
 	static void setDefaultITAlignment(ITAlignment defaultITAlignment) {
-		TextFactory.defaultITAlignment = defaultITAlignment;
+		_defaultITAlignment = defaultITAlignment;
 	}
 
 	public static Set<String> getFontFamilies() {
@@ -106,19 +108,17 @@ public class TextFactory {
 	static {
 		FontFactory.registerDirectory("lib/fonts",true);
 
-		defaultFont = FontFactory.getFont("helvetica");
-		//.getFont("Calibri", FontFactory.defaultEncoding, BaseFont.EMBEDDED);
-		defaultFontMono = FontFactory.getFont("courier");
-		//.getFont("Consolas", FontFactory.defaultEncoding, BaseFont.EMBEDDED);
-		defaultFont.setSize(defaultFontSize);
-		defaultFontMono.setSize(defaultFontMonoSize);
+		_defaultFont = FontFactory.getFont("helvetica");
+		_defaultFontMono = FontFactory.getFont("courier");
+		_defaultFont.setSize(_defaultFontSize);
+		_defaultFontMono.setSize(_defaultFontMonoSize);
 	}
 
-	private float baseFontSize = defaultFontSize;
-	private ITAlignment alignment = defaultITAlignment;
+	private float baseFontSize = _defaultFontSize;
+	private ITAlignment alignment = _defaultITAlignment;
 	private Font currentFont = null;
 	private Paragraph currentParagraph = null;
-	private float currentLeadingMultiplier = defaultLeadingMultiplier;
+	private float currentLeadingMultiplier = _defaultLeadingMultiplier;
 	protected float[] HMULTS = { 2f, 1.5f, 1.33f, (14f/12f), 1f, (10f/12f) };
 
 	public TextFactory() {
@@ -131,11 +131,11 @@ public class TextFactory {
 	public Paragraph newParagraph() {
 		Paragraph p = new Paragraph();
 		p.setAlignment(alignment.value);
-		p.setFont(defaultFont);
-		currentFont = defaultFont;
+		p.setFont(_defaultFont);
+		currentFont = _defaultFont;
 		p.setHyphenation(new HyphenationAuto("en","US",2,2));
 		p.setLeading(0F, getCurrentLeadingMultiplier());
-		p.setSpacingAfter(defaultFont.getSize() * 0.33F);
+		p.setSpacingAfter(_defaultFont.getSize() * 0.33F);
 		currentParagraph = p;
 		return p;
 	}
@@ -143,10 +143,10 @@ public class TextFactory {
 	public Paragraph newParagraphPre() {
 		Paragraph p = new Paragraph();
 		p.setAlignment(ITAlignment.LEFT.value);
-		p.setFont(defaultFontMono);
-		currentFont = defaultFontMono;
+		p.setFont(_defaultFontMono);
+		currentFont = _defaultFontMono;
 		p.setLeading(0F, getCurrentLeadingMultiplier());
-		p.setSpacingAfter(defaultFont.getSize() * 0.33F);
+		p.setSpacingAfter(_defaultFont.getSize() * 0.33F);
 		currentParagraph = p;
 		return p;
 	}
@@ -160,7 +160,7 @@ public class TextFactory {
 		}
 		Font hFont =
 			FontFactory.getFont(
-					defaultFont.getFamilyname(),
+					_defaultFont.getFamilyname(),
 					FontFactory.defaultEncoding,
 					BaseFont.EMBEDDED,
 					baseFontSize * HMULTS[i-1],
@@ -170,16 +170,16 @@ public class TextFactory {
 		h.setFont(hFont);
 		currentFont = hFont;
 		h.setLeading(0F, getCurrentLeadingMultiplier());
-		h.setSpacingAfter(defaultFont.getSize() * 0.33F);
+		h.setSpacingAfter(_defaultFont.getSize() * 0.33F);
 		currentParagraph = h;
 		return h;
 	}
 
 	public Anchor newAnchor() {
 		Anchor a = new Anchor();
-		a.setFont(defaultFont);
-		a.setLeading(defaultFont.getSize() * getCurrentLeadingMultiplier());
-		currentFont = defaultFont;
+		a.setFont(_defaultFont);
+		a.setLeading(_defaultFont.getSize() * getCurrentLeadingMultiplier());
+		currentFont = _defaultFont;
 		return a;
 	}
 
@@ -214,11 +214,11 @@ public class TextFactory {
 	}
 
 	public Font getDefaultFont() {
-		return new Font(defaultFont);
+		return new Font(_defaultFont);
 	}
 
 	public Font getDefaultFontMono() {
-		return new Font(defaultFontMono);
+		return new Font(_defaultFontMono);
 	}
 
 	public static boolean setDefaultFontByName(String fontName) {
@@ -235,33 +235,26 @@ public class TextFactory {
 					throw new RuntimeException(eC);
 				}
 			}
-			newDefaultFont.setSize(defaultFontSize);
-			defaultFont = newDefaultFont;
+			newDefaultFont.setSize(_defaultFontSize);
+			_defaultFont = newDefaultFont;
 			return true;
 		} else {
 			return false;
 		}
 	}
 
-	public static void setDefaultFontBaseSize(float f) {
-		defaultFontSize = f;
-	}
-
-	public static boolean setDefaultMonoFontByName(String fontName) {
+	public static boolean setDefaultFontMonoByName(String fontName) {
 		fontName = fontName.toLowerCase();
 		if (TextFactory.fontFamilyRegistered(fontName)) {
 			Font newDefaultMonoFont = FontFactory.getFont(fontName, FontFactory.defaultEncoding, BaseFont.EMBEDDED);
-			newDefaultMonoFont.setSize(defaultFontMonoSize);
-			defaultFontMono = newDefaultMonoFont;
+			newDefaultMonoFont.setSize(_defaultFontMonoSize);
+			_defaultFontMono = newDefaultMonoFont;
 			return true;
 		} else {
 			return false;
 		}
 	}
 
-	public static void setDefaultMonoFontBaseSize(float f) {
-		defaultFontMonoSize = f;
-	}
 	public static void main(String[] args) {
 
 		FontFactoryImp fontFI = FontFactory.getFontImp();

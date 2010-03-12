@@ -172,13 +172,13 @@ public class Converter {
         }
         Length mfbsLength = Length.fromString(sizeStr);
         float size = mfbsLength.toPoints().getMagnitude();
-        TextFactory.setDefaultMonoFontBaseSize(size);
+        TextFactory.setDefaultFontMonoSize(size);
         System.err.println("Monospace base size: " + size + "pt");
     }
 
     private void setMonospaceFont(Properties props) {
         String fontName = props.getProperty("font.monospace.name");
-        if (TextFactory.setDefaultMonoFontByName(fontName)) {
+        if (TextFactory.setDefaultFontMonoByName(fontName)) {
             System.err.println("Default monospace font: " + fontName);
         } else {
             System.err.println("Failed to set default monospace font to " + fontName + "; retaining previous value");
@@ -224,7 +224,7 @@ public class Converter {
         }
         Length dfbsLength = Length.fromString(sizeStr);
         float size = dfbsLength.toPoints().getMagnitude();
-        TextFactory.setDefaultFontBaseSize(size);
+        TextFactory.setDefaultFontSize(size);
         System.err.println("Default font base size set to " + size + "pt");
     }
 

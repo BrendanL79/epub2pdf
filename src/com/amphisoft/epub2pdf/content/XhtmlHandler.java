@@ -1,5 +1,5 @@
 /*
-epub2pdf, version 0.2 - Copyright 2010 Brendan C. LeFebvre
+epub2pdf, version 0.3 - Copyright 2010 Brendan C. LeFebvre
 
 This file is part of epub2pdf.
 
@@ -19,7 +19,6 @@ along with epub2pdf.  If not, see <http://www.gnu.org/licenses/>.
 package com.amphisoft.epub2pdf.content;
 
 import static com.amphisoft.util.StringManip.nothingButSpaces;
-
 import static com.amphisoft.util.StringManip.removeLineBreaks;
 import static com.amphisoft.util.StringManip.changeLineBreaksToSpaces;
 
@@ -198,7 +197,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 			if (content.length() > 0) {
 				if (currentChunk != null) {
 					if (specialParagraph != null || currentChunk.getFont().compareTo(font) != 0) {
-						stack.push(currentChunk);
+						pushToStack(currentChunk);
 						currentChunk = null;
 					} else {
 						currentChunk.append(content);
@@ -239,7 +238,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 		if("ol".equals(qName) || "ul".equals(qName) || "li".equals(qName)) {
 			System.err.print(qName + " ");
 		}
-		*/
+		 */
 		currentSaxElemId = saxElemIdCounter;
 
 		Map<String,String> attrMap = new HashMap<String,String>();
@@ -252,6 +251,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 			idAttr = "";
 		}
 		SaxElement sE = new SaxElement(qName, saxElemIdCounter++, idAttr);
+		//printlnerr("startElement: " + sE.toString());
 		saxElementStack.push(sE);
 
 		try {
@@ -314,15 +314,15 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 					if (xmlElementId != null) {
 						anchor.setName(xmlElementId);
 					}
-					stack.push(anchor);
+					pushToStack(anchor);
 				} 
 				else {
 					if (xmlElementId != null) {
-						flushStack();
+						//flushStack();
 						Anchor dest = textFactory.newAnchor();
 						dest.setName(xmlElementId);
-						stack.push(dest);
-						flushStack();
+						pushToStack(dest);
+						//flushStack();
 					}
 					for (int i = 0; i < 6; i++) {
 						if (XhtmlTags.H[i].equals(qName)) {
@@ -340,35 +340,38 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 						p.setIndentationLeft(50);
 						p.setIndentationRight(20);
 						p.setAlignment(defaultAlignment);
-						stack.push(p);
+						pushToStack(p);
 					} else if (XhtmlTags.PARAGRAPH.equals(qName)) {
 						flushStack();
 						freshParagraph = true;
 						Paragraph p = textFactory.newParagraph();
-						stack.push(p);
+						pushToStack(p);
 					} else if (XhtmlTags.DIV.equals(qName)) {
 						if (stack.size() > 0 && stack.peek().getChunks().size()>0) {
 							flushStack();
 						}
 						if (stack.size() == 0) {
-							stack.push(textFactory.newParagraph());
+							Paragraph brandNewParagraph = textFactory.newParagraph();
+							pushToStack(brandNewParagraph);
 							freshParagraph = true;
 						}
 					} else if (XhtmlTags.PRE.equals(qName)) {
 						flushStack();
 						freshParagraph = true;
 						Paragraph p = textFactory.newParagraphPre();
-						stack.push(p);
+						pushToStack(p);
 					} else if (XhtmlTags.ORDEREDLIST.equals(qName)) {
+						flushStack();
 						List oList = new List(List.ORDERED, 10); 
-						stack.push(oList);
+						pushToStack(oList);
 					} else if (XhtmlTags.UNORDEREDLIST.equals(qName)) {
+						flushStack();
 						List uList = new List(List.UNORDERED, 10);
-						stack.push(uList);
+						pushToStack(uList);
 					} else if (XhtmlTags.LISTITEM.equals(qName)) {
 						freshParagraph = true;
 						ListItem listItem = new ListItem();
-						stack.push(listItem);
+						pushToStack(listItem);
 					} else if (XhtmlTags.IMAGE.equals(qName)) {
 						handleImage(attributes);
 					} else if (XhtmlTags.LINK.equals(qName)) {
@@ -407,20 +410,19 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 
 	@Override
 	public void endElement(String uri, String localName, String qName) {
-		/*
+		@SuppressWarnings("unused")
 		SaxElement closedElement =
 			saxElementStack.pop();
-		printlnerr("POP :" + saxElementStack.pop());
-		 */
+		//printlnerr("endElement:" + closedElement.toString());
 		/*
 		if("li".equals(qName)) {
 			System.err.print("/" + qName + " ");
 		}
-		
+
 		if("ol".equals(qName) || "ul".equals(qName)) {
-			System.err.println("/" + qName + " ");
+			printlnerr("/" + qName + " ");
 		}
-		*/
+		 */
 		//printlnerr("entering endElement " + localName + "; stack: " + stackStatus());
 		try {
 			//printlnerr("</" + qName + ">");
@@ -430,7 +432,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 					if (XhtmlTags.H[i].equals(qName)) {
 						currentITextStyle ^= Font.BOLD;
 						if(specialParagraph != null) {
-							stack.push(specialParagraph);
+							pushToStack(specialParagraph);
 						}
 						flushStack();
 						specialParagraph = null;
@@ -451,18 +453,18 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 					ListItem listItem = null;
 					List list = null;
 					try {
-						Element stackTop = (Element) stack.pop();
+						Element stackTop = (Element) popFromStack();
 						try {
 							listItem = (ListItem) stackTop;
 						} catch (ClassCastException cce) {
-							stack.push(stackTop);
+							pushToStack(stackTop);
 						}
 						try {
-							Element stackTop2 = (Element) stack.pop();
+							Element stackTop2 = (Element) popFromStack();
 							try {
-							list = (List) stackTop2;
+								list = (List) stackTop2;
 							} catch (ClassCastException cce2) {
-								stack.push(stackTop2);
+								pushToStack(stackTop2);
 							}
 						}
 						catch (EmptyStackException e) {
@@ -473,27 +475,29 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 					} finally {
 						if (listItem != null && list != null)
 							list.add(listItem);
-						if (list != null)
-							stack.push(list);
+						if (list != null) {
+							pushToStack(list);
+						}
 					}
 				} else if (XhtmlTags.ANCHOR.equals(qName)) {
 					Anchor anchor = null;
 					Element stackTop = null;
 					try {
-						stackTop = (Element) stack.pop();
+						stackTop = (Element) popFromStack();
 						try {
-						anchor = (Anchor) stackTop;
+							anchor = (Anchor) stackTop;
 						} catch (ClassCastException cce) {
-							if(stackTop != null)
-								stack.push(stackTop);
+							if(stackTop != null) {
+								pushToStack(stackTop);
+							}
 						}
-						TextElementArray previous = (TextElementArray) stack
-						.pop();
-						previous.add(anchor);
-						stack.push(previous);
+						if(anchor != null) {
+							pushToStack(anchor);
+						}
 					} catch (EmptyStackException es) {
-						if (anchor != null)
-							document.add(anchor);
+						if (anchor != null) {
+							pushToStack(anchor);
+						}
 					} 
 				} else if (XhtmlTags.HTML.equals(qName)) {
 					flushStack();
@@ -535,9 +539,19 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 					currentITextStyle |= Font.ITALIC;
 				}
 			}
-
+			else {
+				currentITextStyle = Font.NORMAL;
+			}
 		}
-
+	}
+	
+	@SuppressWarnings("unused")
+	private void debugElementStack(Stack<Element> elemStack) {
+		for(Element elem : elemStack) {
+			debugElementNoBreak(elem); 
+			printerr(" | ");
+		}
+		printlnerr("");
 	}
 
 	/**
@@ -545,31 +559,41 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 	 */
 	private void flushStack() {
 		//printlnerr("entering flushStack; stack: " + stackStatus());
+		Stack<Element> reverseStack = new Stack<Element>();
 		try {
 			//printlnerr("*** FLUSH COMMENCE ***");
+			//debugElementStack(stack);
 			while (stack.size() > 0) {
 				Element element = null;
 				try {
-					element = (Element) stack.pop();
+					element = (Element) popFromStack();
 					if (!(element instanceof TextElementArray)) {
 						System.err.print("");
-						System.err.println("Orphaned element: [" + element.toString() + "]");
+						printlnerr("Orphaned element: [" + element.toString() + "]");
 					}
-					TextElementArray previous = (TextElementArray) stack.pop();
-					if (previous != null) {
-						previous.add(element);
-						stack.push(previous);
-					} else {
-						stack.push(element);
+					else if(element instanceof Anchor) {
+						reverseStack.push(element);
+					}
+					else {
+						TextElementArray previous = (TextElementArray) popFromStack();
+						if (previous != null) {
+							if(previous instanceof Anchor) {
+								reverseStack.push(element);
+								reverseStack.push(previous);
+							}
+							else {
+								previous = appendToTEA(previous,element);
+								pushToStack(previous);
+							}
+						} 
+						else {
+							pushToStack(element);
+						}
 					}
 
 				} catch (EmptyStackException es) {
 					if (element != null) {
-						document.add(element);
-						if(element instanceof TextElementArray) {
-							checkTextElementArrayForTocAnchors(
-									document, (TextElementArray) element);
-						}
+						reverseStack.push(element);
 					}
 				}
 			}
@@ -578,6 +602,52 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 			e.printStackTrace();
 			printerr("");
 		}
+		
+		//printlnerr("*** ADDING TO PDF ***");
+		//debugElementStack(reverseStack);
+		
+		try {
+			printerr("");
+			while(reverseStack.size() > 0)
+			{
+				Element elemToAdd = reverseStack.pop();
+				if(elemToAdd instanceof TextElementArray) {
+					checkTextElementArrayForTocAnchors(
+							document, (TextElementArray) elemToAdd);
+				}
+				addToDocument(elemToAdd);
+				
+			}
+		} 
+		catch (DocumentException docEx) {
+				docEx.printStackTrace();
+		}
+
+	}
+
+	private TextElementArray appendToTEA(TextElementArray previous,
+			Element element) {
+		//debugAppendToTEA(previous,element);
+		@SuppressWarnings("unused")
+		boolean success = previous.add(element);
+		//debugAppendedTEA(previous,success);
+		return previous;
+	}
+
+	@SuppressWarnings("unused")
+	private void debugAppendToTEA(TextElementArray tea, Element element) {
+		printerr("Appending to TEA: ");
+		debugElementNoBreak(tea);
+		printerr(" + ");
+		debugElement(element);
+	}
+
+	@SuppressWarnings("unused")
+	private void debugAppendedTEA(TextElementArray tea, boolean success) {
+		printerr("Append to TEA ");
+		printerr(success ? "succeeded: " : "FAILED: ");
+		printerr("TEA now: ");
+		debugElement(tea);
 	}
 
 	private void checkTextElementArrayForTocAnchors(Document doc,
@@ -627,7 +697,8 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 			String lookup = lookupSB.toString();
 			NavPoint nP = sourceEpub.getNcx().findNavPoint(lookup);
 			if(nP != null) {
-				//System.err.println("addToBookmarks " + currentFile + "#" + aName);
+				document.newPage();
+				//printlnerr("addToBookmarks " + currentFile + "#" + aName);
 				PdfDestination here = new PdfDestination(PdfDestination.FIT);
 				new PdfOutline(bookmarkRoot, here, nP.getNavLabelText());
 			}
@@ -635,7 +706,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 				//throw new Exception("NCX lookup fail: " + lookup);
 			}    		
 		}catch(Exception e) {
-			//System.err.println("Failed to update PDF bookmarks with Anchor " + aName + ": " + e.getMessage());
+			//printlnerr("Failed to update PDF bookmarks with Anchor " + aName + ": " + e.getMessage());
 		}
 	}
 
@@ -646,35 +717,40 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 		}
 	}
 
+	private java.util.List<String> getNoNewSpaceTagsList() {
+		String[] noNewSpaceTags = {"a","span","em","strong","small","br"};
+		java.util.List<String> noNewSpaceTagsList = new ArrayList<String>();
+		for (String tag : noNewSpaceTags) {
+			noNewSpaceTagsList.add(tag);
+		}
+		return noNewSpaceTagsList;
+
+	}
+
 	/**
 	 * If the current Chunk is not null, its constituents are forwarded to the stack and it is then made
 	 * null.
 	 */
 	private void updateStack() {
 		//printlnerr("entering updateStack; stack: " + stackStatus());
-		String[] noNewSpaceTags = {"a","span","em","strong","small","br"};
-		java.util.List<String> noNewSpaceTagsColl = new ArrayList<String>();
-		for (String tag : noNewSpaceTags) {
-			noNewSpaceTagsColl.add(tag);
-		}
+		java.util.List<String> noNewSpaceTagsColl =	getNoNewSpaceTagsList();
 
 		if (currentChunk != null) {
 			TextElementArray current;
 			try {
-				current = (TextElementArray) stack.pop();
+				current = (TextElementArray) popFromStack();
 				if ((!(current instanceof Paragraph)
 						|| !((Paragraph) current).isEmpty())
 						&&
 						!(noNewSpaceTagsColl.contains(currentTag))) {
-					//printlnerr("*** CHUNK { } (auto)");
-					current.add(new Chunk(" "));
+					current = appendToTEA(current, new Chunk(" "));
 				}
 			} catch (EmptyStackException ese) {
 				current = textFactory.newParagraph();
 			}
 			//printlnerr("*** CHUNK {" + currentChunk.getContent() + "}");
 			current.add(currentChunk);
-			stack.push(current);
+			pushToStack(current);
 			currentChunk = null;
 		}
 		//printlnerr("leaving updateStack; stack: " + stackStatus());
@@ -696,15 +772,18 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 		if (url == null)
 			return;
 		Image img = null;
+		String imgSimpleName = "";
 		try {
 			File imgFile = new File(xhtmlDir,url);
 			String imgPath = imgFile.getCanonicalPath();
+			imgSimpleName = imgFile.getName();
 			img = Image.getInstance(imgPath);
 			if (alt != null) {
 				img.setAlt(alt);
 			}
 		} catch (Exception e) {
-			System.err.println("epub2pdf: problem adding image: " + e.getMessage());
+			printlnerr("epub2pdf: problem adding image " + 
+					imgSimpleName + ": " + e.getMessage());
 			return;
 		}
 		String property;
@@ -742,9 +821,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 		if (imgOrigHeight > imgMaxHeight || imgOrigWidth > imgMaxWidth) {
 			img.scaleToFit(imgMaxWidth, imgMaxHeight);
 		}
-
-		document.add(img);
-
+		addToDocument(img);
 	}
 
 	public XhtmlHandler(String xhtml, Document docInProgress) throws MalformedURLException, IOException, SAXException {
@@ -759,9 +836,9 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 	void parseXhtml(String xhtml) throws MalformedURLException, IOException, SAXException {
 
 		File xhtmlFile = new File(xhtml);
-		
-		System.err.println("Processing " + xhtmlFile.getName());
-		
+
+		printlnerr("Processing " + xhtmlFile.getName());
+
 		xhtmlDir = xhtmlFile.getParentFile();
 
 		CatalogManager.getStaticManager().setIgnoreMissingProperties(true);
@@ -782,32 +859,35 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 	}
 
 
-	@SuppressWarnings("unchecked")
-	static String elementContentsAbridged(Element el) {
+	static String getAbridgedContents(Element elem) {
 		String content = "";
-		ArrayList chunkList = el.getChunks();
-		for (Object o : chunkList) {
-			Chunk ch = (Chunk) o;
-			content += ch.getContent();
-		}
+		if(elem != null)
+			content += elem.toString();
 		int len = content.length();
 		if (len>25) {
 			StringBuilder sB = new StringBuilder();
 			sB.append(content.substring(0, 10));
 			sB.append(" ... ");
 			sB.append(content.substring(len-10));
-			return sB.toString();
-		} else {
-			return content;
+			content = sB.toString();
 		}
+		if(elem instanceof Anchor) {
+			Anchor elemAnchor = (Anchor) elem;
+			StringBuilder sB = new StringBuilder();
+			sB.append('_');
+			sB.append(elemAnchor.getName());
+			if(elemAnchor.getReference() != null) {
+				sB.append("->");
+				sB.append(elemAnchor.getReference());
+			}
+			sB.append(":");
+			sB.append(content);
+			content = sB.toString();
+		}
+		return content;
 	}
-	/*
-    public static void setDefaultFont(String fontName) {
 
-    }
-	 */
-
-	static class SaxElement {
+  static class SaxElement {
 		final String qName;
 		final int id;
 		final String idAttr;
@@ -856,6 +936,67 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 		bookmarkRoot = outline;
 	}
 
+	private Element pushToStack(Element elem) {
+		//debugPushing(elem);
+		if(elem instanceof Anchor && stack.size() > 0) {
+			Element stackTop = stack.peek();
+			if(stackTop instanceof Paragraph) {
+				((Paragraph) stackTop).add(elem);
+				return elem;
+			}
+		}
+		return stack.push(elem);
+	}
+
+	private Element popFromStack() throws EmptyStackException {
+		//debugPopping(stack.peek());
+		return stack.pop();
+	}
+
+	private boolean addToDocument(Element elem) throws DocumentException {
+		//debugAdding(elem);
+		return document.add(elem);
+	}
+
+	@SuppressWarnings("unused")
+	private void debugPushing(Element elem) {
+		printerr("Pushing: ");
+		debugElement(elem);
+	}
+
+	@SuppressWarnings("unused")
+	private void debugPopping(Element elem) {
+		printerr("Popping: ");
+		debugElement(elem);
+	}
+
+	@SuppressWarnings("unused")
+	private void debugAdding(Element elem) {
+		printerr("Adding: ");
+		debugElement(elem);
+	}
+
+	private void debugElement(Element elem) {
+		printerr(getClassOf(elem));
+		printlnerr(getAbridgedContents(elem));
+	}
+
+	private void debugElementNoBreak(Element elem) {
+		printerr(getClassOf(elem));
+		printerr(getAbridgedContents(elem));
+	}
+
+
+	private String getClassOf(Element elem) {
+		if(elem == null) {
+			return "<null>";
+		}
+		else {
+			Object elemObj = (Object) elem;
+			return elemObj.getClass().getSimpleName();
+		}
+	}
+	
 	@Override
 	public boolean subscribe(LogEventSubscriber sub) {
 		return _subscribers.add(sub);
@@ -871,5 +1012,4 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 			sub.notify(ev);
 		}
 	}
-
 }

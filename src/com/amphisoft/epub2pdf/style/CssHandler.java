@@ -141,8 +141,6 @@ public class CssHandler extends DefaultDocumentHandler {
         //"CSS-prop|" + name + "|" +
         //SacLexicalUnit.lookupName(luType) + "|"
         //);
-
-        String luTypeStr = SacLexicalUnit.lookupName(luType);
         
         if ("font-weight".equals(name)) {
         	try {

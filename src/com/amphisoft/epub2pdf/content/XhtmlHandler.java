@@ -1007,7 +1007,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 		return _subscribers.remove(sub);
 	}
 	
-	private void notifySubscribers(LogEvent ev) {
+	void notifySubscribers(LogEvent ev) {
 		for(LogEventSubscriber sub : _subscribers) {
 			sub.notify(ev);
 		}

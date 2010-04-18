@@ -18,50 +18,107 @@ along with epub2pdf.  If not, see <http://www.gnu.org/licenses/>.
 */
 package com.amphisoft.epub2pdf.metadata;
 
-import javax.swing.tree.DefaultMutableTreeNode;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.amphisoft.util.jgtree.ImmutableTree;
+import com.amphisoft.util.jgtree.ImmutableTreeNode;
+import com.amphisoft.util.jgtree.Tree;
+import com.amphisoft.util.jgtree.TreeNode;
+
+import com.amphisoft.epub.metadata.Ncx;
+import com.amphisoft.epub.metadata.Ncx.NavPoint;
 import com.lowagie.text.pdf.PdfDestination;
+import com.lowagie.text.pdf.PdfOutline;
 
-public class TocTreeNode extends DefaultMutableTreeNode {
+public class TocTreeNode {
 
-	Payload payload = new Payload();
+	NavPoint navPoint;
+	PdfDestination pdfDestination = null;
+	PdfOutline pdfOutline = null;
 	
-	public TocTreeNode() {
-		super();
-		this.setUserObject(payload);
-	}
-	
-	public void setDisplayedTitle(String s) {
-		payload.setDisplayedTitle(s);
-	}
-	
-	public void setPdfDestination(PdfDestination d) {
-		payload.setDestination(d);
-	}
-	
-	public String getDisplayedTitle() {
-		return payload.displayedTitle;
+	public TocTreeNode(NavPoint nP) {
+		navPoint = nP;
 	}
 	
 	public PdfDestination getPdfDestination() {
-		return payload.pdfDestination;
+		return pdfDestination;
+	}
+
+	public void setPdfDestination(PdfDestination d) {
+		if(pdfDestination != null)
+			throw new RuntimeException(new IllegalAccessException());
+		pdfDestination = d;
+	}
+
+	public PdfOutline getPdfOutline() {
+		return pdfOutline;
 	}
 	
-	private static final long serialVersionUID = 1985017816114097551L;
-
-	public class Payload {
-		PdfDestination pdfDestination = null;
-		String displayedTitle = null;
-		
-		public void setDisplayedTitle(String s) {
-			if(displayedTitle != null)
-				throw new RuntimeException(new IllegalAccessException());
-			displayedTitle = s;
+	public void setPdfOutline(PdfOutline o) {
+		if(pdfOutline != null) {
+			throw new RuntimeException(new IllegalAccessException());
 		}
-		public void setDestination(PdfDestination d) {
-			if(pdfDestination != null)
-				throw new RuntimeException(new IllegalAccessException());
-			pdfDestination = d;
+		pdfOutline = o;
+	}
+	
+	public static Tree<TocTreeNode> buildTocTree(Ncx ncx) {
+        List<NavPoint> ncxTocNested = new ArrayList<NavPoint>();
+        if(ncx != null) {
+        	ncxTocNested.addAll(ncx.getNavPointsNested());
+        }
+        Tree<TocTreeNode> tocTree;
+        if(ncxTocNested.size() == 1) {
+        	TocTreeNode rootTocTreeNode = new TocTreeNode(ncxTocNested.get(0));
+        	tocTree = new ImmutableTree<TocTreeNode>(rootTocTreeNode);
+        }
+        else {
+        	tocTree = new ImmutableTree<TocTreeNode>();
+        	for(NavPoint npTopLevel : ncxTocNested) {
+        		TreeNode<TocTreeNode> childNode = 
+        			new ImmutableTreeNode<TocTreeNode>(new TocTreeNode(npTopLevel));
+        		tocTree.getRoot().addChild(childNode);
+        	}
+        	for(TreeNode<TocTreeNode> nodeTopLevel : tocTree.getRoot().getChildren()) {
+        		TocTreeNode.addChildren(nodeTopLevel);
+        	}
+        }
+		return tocTree;
+	}
+
+	public static TreeNode<TocTreeNode> findInTreeByNavPoint(Tree<TocTreeNode> tocTree, NavPoint nP) {
+		List<TreeNode<TocTreeNode>> tocTreeNodeList = tocTree.getNodesAsList();
+		for(TreeNode<TocTreeNode> node : tocTreeNodeList) {
+			if(checkNode(node,nP)) {
+				return node;
+			}
+		}
+		return null;
+	}
+	
+	
+	private static boolean checkNode(TreeNode<TocTreeNode> node, NavPoint nP) {
+		TocTreeNode ttn = node.getValue();
+		if(ttn != null && ttn.navPoint == nP) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	
+	public static void addChildren(TreeNode<TocTreeNode> parent) {
+		List<NavPoint> npChildren = new ArrayList<NavPoint>();
+		NavPoint nP = parent.getValue().navPoint;
+		if(nP != null) {
+			npChildren.addAll(nP.children());
+		}
+		addChildren(parent,npChildren);
+	}
+	public static void addChildren(TreeNode<TocTreeNode> parent, List<NavPoint> childNPs) {
+		for(NavPoint value : childNPs) {
+			TreeNode<TocTreeNode> newParent = parent.addChild(new TocTreeNode(value));
+			addChildren(newParent, value.children());
 		}
 	}
 }

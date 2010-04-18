@@ -38,6 +38,7 @@ import org.xml.sax.SAXException;
 import com.amphisoft.epub.Epub;
 import com.amphisoft.epub.content.XhtmlTags;
 import com.amphisoft.epub.metadata.Ncx.NavPoint;
+import com.amphisoft.epub2pdf.metadata.TocTreeNode;
 import com.amphisoft.epub2pdf.style.CssParser;
 import com.amphisoft.epub2pdf.style.CssStyleMap;
 import com.amphisoft.epub2pdf.style.StyleSpecText;
@@ -46,6 +47,9 @@ import com.amphisoft.logging.LogEventPublisher;
 import com.amphisoft.logging.LogEventSubscriber;
 import com.amphisoft.pdf.ITAlignment;
 import com.amphisoft.pdf.ITPageSize;
+import com.amphisoft.util.jgtree.Tree;
+import com.amphisoft.util.jgtree.TreeNode;
+
 import com.lowagie.text.Anchor;
 import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
@@ -101,7 +105,8 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 	private static CssParser cssParser;
 	private static Epub sourceEpub = null;
 	private static PdfOutline bookmarkRoot = null;
-
+	private static Tree<TocTreeNode> tocTree = null;
+	
 	static {
 		cssParser = new CssParser();
 	}
@@ -670,12 +675,6 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 	}
 
 	private void addToBookmarks(String currentFile, String aName) { // curFileCP, aName
-		// TODO right now the PDF TOC is flat. The following will have to be 
-		//      revised to support multilevel nesting.
-		//      Rather than invoking the PdfOutline constructor directly,
-		//      create and use a class or set of classes that basically
-		//      mirror the Ncx NavPoint tree but with nodes that carry the
-		//      generated PdfOutline object along with the NavPoint
 		try {
 			StringBuilder lookupSB = new StringBuilder();
 			String currentFileBaseName = new File(currentFile).getName();
@@ -696,11 +695,27 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 			}
 			String lookup = lookupSB.toString();
 			NavPoint nP = sourceEpub.getNcx().findNavPoint(lookup);
+			TreeNode<TocTreeNode> npNode = TocTreeNode.findInTreeByNavPoint(tocTree, nP);
 			if(nP != null) {
 				document.newPage();
-				//printlnerr("addToBookmarks " + currentFile + "#" + aName);
+				
+				PdfOutline pdfOutlineParent = bookmarkRoot;
+            	if(npNode != null) {
+            		TreeNode<TocTreeNode> parent = npNode.getParent();
+            		if(parent != null) {
+            			TocTreeNode parentTTN = parent.getValue();
+            			if(parentTTN != null && parentTTN.getPdfOutline() != null) {
+            				pdfOutlineParent = parentTTN.getPdfOutline();
+            			}
+            		}
+            	}
+
 				PdfDestination here = new PdfDestination(PdfDestination.FIT);
-				new PdfOutline(bookmarkRoot, here, nP.getNavLabelText());
+				PdfOutline pdfTocEntry = new PdfOutline(pdfOutlineParent, here, nP.getNavLabelText());
+				if(npNode != null) {
+            		npNode.getValue().setPdfDestination(here);
+            		npNode.getValue().setPdfOutline(pdfTocEntry);
+            	}
 			}
 			else {
 				//throw new Exception("NCX lookup fail: " + lookup);
@@ -934,6 +949,9 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 	}
 	public static void setBookmarkRoot(PdfOutline outline) {
 		bookmarkRoot = outline;
+	}
+	public static void setTocTree(Tree<TocTreeNode> tree) {
+		tocTree = tree;
 	}
 
 	private Element pushToStack(Element elem) {

@@ -1,4 +1,4 @@
-epub2pdf v0.3 - 14 February 2010 - Copyright 2010 Brendan C. LeFebvre.
+epub2pdf v0.4 - 14 February 2010 - Copyright 2010 Brendan C. LeFebvre.
 
 See LICENSE DETAILS below for full license and warranty information.
 
@@ -65,6 +65,11 @@ output directory, or Java will choke.
 
 
 CHANGES
+
+Since v0.3:
+
+- PDF bookmark list now replicates any nesting in the EPUB's
+NCX table of contents.
 
 Since v0.2:
 

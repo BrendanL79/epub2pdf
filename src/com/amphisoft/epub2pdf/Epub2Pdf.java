@@ -1,5 +1,5 @@
 /*
-epub2pdf, version 0.3 - Copyright 2010 Brendan C. LeFebvre
+epub2pdf, version 0.4 - Copyright 2010 Brendan C. LeFebvre
 
 This file is part of epub2pdf.
 
@@ -19,7 +19,7 @@ along with epub2pdf.  If not, see <http://www.gnu.org/licenses/>.
 package com.amphisoft.epub2pdf;
 
 public class Epub2Pdf {
-	public static final String VERSION = "0.3";
+    public static final String VERSION = "0.4";
 
     /**
      * @param args

@@ -113,7 +113,7 @@ public class Converter {
     }
 
     private void setDefaultAlignment(Properties props) {
-        String justify = props.getProperty("full.justify");
+        String justify = props.getProperty("full.justify").trim();
         if (justify.toLowerCase().contains("true")) {
             XhtmlHandler.setDefaultAlignment(Paragraph.ALIGN_JUSTIFIED);
             System.err.println("Default paragraph alignment: justified");
@@ -124,7 +124,7 @@ public class Converter {
     }
 
     private void setOutputDir(Properties props) {
-        String outputDirStr = props.getProperty("output.dir");
+        String outputDirStr = props.getProperty("output.dir").trim();
         if (outputDirStr.length() == 0) {
             // leave as default
         } else {
@@ -137,7 +137,7 @@ public class Converter {
     }
 
     private void setPageSize(Properties props) {
-        String pageSizeStr = props.getProperty("page.size");
+        String pageSizeStr = props.getProperty("page.size").trim();
         pageSizeStr = pageSizeStr.toLowerCase();
         if (pageSizeStr.contains("x")) {
             int sepIdx = pageSizeStr.indexOf('x');
@@ -170,7 +170,7 @@ public class Converter {
     }
 
     private void setMonospaceFontBaseSize(Properties props) {
-        String sizeStr = props.getProperty("font.monospace.sizebase");
+        String sizeStr = props.getProperty("font.monospace.sizebase").trim();
         if (sizeStr == null) {
             sizeStr = "10pt";
         }
@@ -181,7 +181,7 @@ public class Converter {
     }
 
     private void setMonospaceFont(Properties props) {
-        String fontName = props.getProperty("font.monospace.name");
+        String fontName = props.getProperty("font.monospace.name").trim();
         if (TextFactory.setDefaultFontMonoByName(fontName)) {
             System.err.println("Default monospace font: " + fontName);
         } else {
@@ -190,7 +190,7 @@ public class Converter {
     }
 
     private void setMargins(Properties props) {
-        String marginStr = props.getProperty("margins.size");
+        String marginStr = props.getProperty("margins.size").trim();
         StringTokenizer sT = new StringTokenizer(marginStr, ",");
         ArrayList<String> marginParams = new ArrayList<String>();
         while (sT.hasMoreTokens()) {
@@ -222,7 +222,7 @@ public class Converter {
     }
 
     private void setDefaultFontBaseSize(Properties props) {
-        String sizeStr = props.getProperty("font.default.sizebase");
+        String sizeStr = props.getProperty("font.default.sizebase").trim();
         if (sizeStr == null) {
             sizeStr = "12pt";
         }
@@ -233,7 +233,7 @@ public class Converter {
     }
 
     private void setDefaultFont(Properties props) {
-        String fontName = props.getProperty("font.default.name");
+        String fontName = props.getProperty("font.default.name").trim();
         if (TextFactory.setDefaultFontByName(fontName)) {
             System.err.println("Default font set to " + fontName);
         } else {

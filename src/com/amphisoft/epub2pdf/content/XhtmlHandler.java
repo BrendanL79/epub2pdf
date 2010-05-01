@@ -34,6 +34,7 @@ import org.apache.xml.resolver.tools.ResolvingXMLReader;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import com.amphisoft.epub.Epub;
 import com.amphisoft.epub.content.XhtmlTags;
@@ -50,23 +51,23 @@ import com.amphisoft.pdf.ITPageSize;
 import com.amphisoft.util.jgtree.Tree;
 import com.amphisoft.util.jgtree.TreeNode;
 
-import com.lowagie.text.Anchor;
-import com.lowagie.text.Chunk;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Element;
-import com.lowagie.text.ElementTags;
-import com.lowagie.text.Font;
-import com.lowagie.text.Image;
-import com.lowagie.text.List;
-import com.lowagie.text.ListItem;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.Rectangle;
-import com.lowagie.text.RectangleReadOnly;
-import com.lowagie.text.TextElementArray;
-import com.lowagie.text.html.SAXmyHtmlHandler;
-import com.lowagie.text.pdf.PdfDestination;
-import com.lowagie.text.pdf.PdfOutline;
+import com.itextpdf.text.Anchor;
+import com.itextpdf.text.Chunk;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.ElementTags;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.Image;
+import com.itextpdf.text.List;
+import com.itextpdf.text.ListItem;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.RectangleReadOnly;
+import com.itextpdf.text.TextElementArray;
+import com.itextpdf.text.html.SAXmyHtmlHandler;
+import com.itextpdf.text.pdf.PdfDestination;
+import com.itextpdf.text.pdf.PdfOutline;
 
 import static com.amphisoft.util.Print.*;
 /**

@@ -18,10 +18,10 @@ along with epub2pdf.  If not, see <http://www.gnu.org/licenses/>.
 */
 package com.amphisoft.pdf;
 
-import com.lowagie.text.Rectangle;
-import com.lowagie.text.RectangleReadOnly;
+import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.RectangleReadOnly;
 
-public class ITPageSize extends com.lowagie.text.PageSize {
+public class ITPageSize extends com.itextpdf.text.PageSize {
 
     private static final float FOXIT_WIDTH_PT = 255.12F;
     private static final float FOXIT_HEIGHT_PT = 325.98F;

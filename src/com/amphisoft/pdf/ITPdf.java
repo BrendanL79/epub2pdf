@@ -26,8 +26,8 @@ import java.io.FileOutputStream;
  *
  */
 public class ITPdf implements Pdf {
-    public final com.lowagie.text.Document document;
-    public final com.lowagie.text.pdf.PdfWriter writer;
+    public final com.itextpdf.text.Document document;
+    public final com.itextpdf.text.pdf.PdfWriter writer;
 
     public ITPdf(String path) {
         try {
@@ -44,9 +44,9 @@ public class ITPdf implements Pdf {
                 mTop = marginTopPt;
                 mBottom = marginBottomPt;
             }
-            document = new com.lowagie.text.Document(
+            document = new com.itextpdf.text.Document(
                 pageRectangle, mLeft, mRight, mTop, mBottom);
-            writer = com.lowagie.text.pdf.PdfWriter.getInstance(
+            writer = com.itextpdf.text.pdf.PdfWriter.getInstance(
                          document, new FileOutputStream(path));
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -56,7 +56,7 @@ public class ITPdf implements Pdf {
 
     // public static members/mutators for params that must be set pre-Document.open()
 
-    public static com.lowagie.text.Rectangle pageRectangle = ITPageSize.FOXIT_ESLICK;
+    public static com.itextpdf.text.Rectangle pageRectangle = ITPageSize.FOXIT_ESLICK;
 
     static boolean makeUniformMargins = false;
     static float marginUniformPt = 5.0F;

@@ -25,14 +25,14 @@ import java.util.TreeSet;
 
 import com.amphisoft.epub2pdf.style.StyleSpecText;
 import com.amphisoft.pdf.ITAlignment;
-import com.lowagie.text.Anchor;
-import com.lowagie.text.ExceptionConverter;
-import com.lowagie.text.Font;
-import com.lowagie.text.FontFactory;
-import com.lowagie.text.FontFactoryImp;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.pdf.BaseFont;
-import com.lowagie.text.pdf.HyphenationAuto;
+import com.itextpdf.text.Anchor;
+import com.itextpdf.text.ExceptionConverter;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.FontFactoryImp;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.HyphenationAuto;
 
 /**
  * Automates the generation of iText PDF components
@@ -260,21 +260,13 @@ public class TextFactory {
 		FontFactoryImp fontFI = FontFactory.getFontImp();
 
 		System.out.println("\nFAMILIES");
-		Set<Object> famsRaw = fontFI.getRegisteredFamilies();
-		Set<String> fams = new TreeSet<String>();
-		for (Object s : famsRaw) {
-			fams.add(s.toString());
-		}
+		Set<String> fams = fontFI.getRegisteredFamilies();
 		for (String s : fams) {
 			System.out.println(s);
 		}
 
 		System.out.println("\nFONTS");
-		Set<Object> fontsRaw = fontFI.getRegisteredFonts();
-		Set<String> fonts = new TreeSet<String>();
-		for (Object s : fontsRaw) {
-			fonts.add(s.toString());
-		}
+		Set<String> fonts = fontFI.getRegisteredFonts();
 		for (String s : fonts) {
 			System.out.println(s);
 		}

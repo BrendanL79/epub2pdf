@@ -34,9 +34,9 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import com.amphisoft.epub.content.XhtmlTags;
-import com.lowagie.text.Document;
-import com.lowagie.text.Element;
-import com.lowagie.text.html.SAXmyHtmlHandler;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.html.SAXmyHtmlHandler;
 import static com.amphisoft.util.Print.*;
 /**
  * XHTML parser that simply notes the files and element id's encountered.

@@ -18,7 +18,7 @@ along with epub2pdf.  If not, see <http://www.gnu.org/licenses/>.
 */
 package com.amphisoft.epub.content;
 
-import com.lowagie.text.html.HtmlTags;
+import com.itextpdf.text.html.HtmlTags;
 
 public class XhtmlTags extends HtmlTags {
     public static final String BLOCKQUOTE = "blockquote";

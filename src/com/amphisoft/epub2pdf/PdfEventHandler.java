@@ -18,7 +18,7 @@ along with epub2pdf.  If not, see <http://www.gnu.org/licenses/>.
 */
 package com.amphisoft.epub2pdf;
 
-import com.lowagie.text.pdf.PdfPageEventHelper;
+import com.itextpdf.text.pdf.PdfPageEventHelper;
 
 public class PdfEventHandler extends PdfPageEventHelper {
 

@@ -28,8 +28,8 @@ import com.amphisoft.util.jgtree.TreeNode;
 
 import com.amphisoft.epub.metadata.Ncx;
 import com.amphisoft.epub.metadata.Ncx.NavPoint;
-import com.lowagie.text.pdf.PdfDestination;
-import com.lowagie.text.pdf.PdfOutline;
+import com.itextpdf.text.pdf.PdfDestination;
+import com.itextpdf.text.pdf.PdfOutline;
 
 public class TocTreeNode {
 

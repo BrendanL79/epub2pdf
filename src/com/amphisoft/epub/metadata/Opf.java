@@ -40,6 +40,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import com.amphisoft.util.xml.DomNodeType;
 import com.amphisoft.util.xml.EnhancedDocument;
 import com.amphisoft.util.xml.EnhancedNode;
 import com.amphisoft.util.xml.NamespaceAttribute;
@@ -196,8 +197,22 @@ public class Opf {
 
                 DOMParser domParser = new DOMParser();
                 domParser.parse(path);
+                Document opfOrigDoc = domParser.getDocument();
+                NodeList odkids = opfOrigDoc.getChildNodes();
+                int oks = odkids.getLength();
+                for(int i = 0; i < oks; i++) {
+                	Node kid = odkids.item(i);
+                	System.out.println("" + DomNodeType.getName(kid.getNodeType()) + ":" + kid.getLocalName());
+                	NodeList grandkids = kid.getChildNodes();
+                	for(int j = 0; j < grandkids.getLength(); j++) {
+                		Node grandkid = grandkids.item(j);
+                		System.out.println("  " + DomNodeType.getName(grandkid.getNodeType()) + ":" + grandkid.getLocalName());
+                	}
+                	
+                }
                 EnhancedDocument opfDoc = new EnhancedDocument(domParser.getDocument());
-                EnhancedNode opfPackageNode = new EnhancedNode(opfDoc.getFirstChildNamed("package"));
+                Node pkN = opfDoc.getFirstChildNamed("package",DomNodeType.ELEMENT_NODE);
+                EnhancedNode opfPackageNode = new EnhancedNode(pkN);
 
                 Node mdN = opfPackageNode.getFirstChildNamed("metadata");
                 EnhancedNode metadataNode = new EnhancedNode(mdN);
@@ -299,7 +314,7 @@ public class Opf {
             tocManifestItemId = spineAttrs.getNamedItem("toc").getNodeValue();
         else {
             for (ManifestItem mI : manifestItems.values()) {
-                if (mI.mediaType.contains("ncx")) {
+                if (mI.mediaType.contains("ncx") || mI.href.endsWith("ncx")) {
                     tocManifestItemId = mI.id;
                     break;
                 }

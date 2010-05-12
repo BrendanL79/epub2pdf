@@ -38,6 +38,9 @@ public class EnhancedNode implements Node {
     private Node node;
 
     public EnhancedNode(Node n) {
+    	if(n == null) {
+    		throw new IllegalArgumentException("Attempted to instantiate EnhancedNode with NULL");
+    	}
         node = n;
     }
 
@@ -46,12 +49,17 @@ public class EnhancedNode implements Node {
      * @return first child node of this document with the given name, or null if none found.
      */
     public Node getFirstChildNamed(String name) {
+    	Node target = null;
+    	System.out.print(DomNodeType.getName(node.getNodeType()) + ":" + node.getNodeName() + "_getFirstChildNamed[" + name + "]:");
         for (Node n : getChildNodesIterable()) {
+        	System.out.print("...[" + n.getNodeName() + "|" + n.getLocalName() + "]");
             if (name.equals(n.getNodeName()) || name.equals(n.getLocalName())) {
-                return n;
+                target = n;
+                break;
             }
         }
-        return null;
+        System.out.println();
+        return target;
     }
 
     @Override

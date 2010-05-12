@@ -417,4 +417,20 @@ public class EnhancedDocument extends EnhancedNode implements Document {
     public String toString() {
         return doc.toString();
     }
+
+	public Node getFirstChildNamed(String targetName, DomNodeType targetType) {
+		Node targetNode = null;
+		Iterable<Node> children = this.getChildNodesIterable();
+		for(Node child : children) {
+			boolean nameMatches = false;
+			boolean typeMatches = false;
+			nameMatches = (child.getNodeName().equals(targetName) || child.getLocalName().equals(targetName));
+			typeMatches = (targetType.getId() == child.getNodeType());
+			if(nameMatches && typeMatches) {
+				targetNode = child;
+				break;
+			}
+		}
+		return targetNode;
+	}
 }

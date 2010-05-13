@@ -377,6 +377,8 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 						pushToStack(listItem);
 					} else if (XhtmlTags.IMAGE.equals(qName)) {
 						handleImage(attributes);
+					} else if (qName != null && qName.endsWith("image")) {
+						handleSvgImage(attributes);
 					} else if (XhtmlTags.LINK.equals(qName)) {
 						// if it's a stylesheet, parse it & update current-style
 						if (
@@ -782,8 +784,8 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 	 * @throws DocumentException
 	 */
 	private void handleImage(Attributes attributes)
-	throws MalformedURLException, IOException, DocumentException {
-		//printlnerr("(image)");
+	throws DocumentException 
+	{
 		String url = attributes.getValue(XhtmlTags.URL);
 		String alt = attributes.getValue(XhtmlTags.ALT);
 		if (url == null)
@@ -841,6 +843,48 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 		addToDocument(img);
 	}
 
+	private void handleSvgImage(Attributes attributes)
+	throws DocumentException
+	{
+		String widthS = attributes.getValue("width");
+		String heightS = attributes.getValue("height");
+		String hrefS = attributes.getValue("xlink:href");
+		if(hrefS == null) {
+			hrefS = attributes.getValue("href");
+		}
+		if(hrefS == null) {
+			return;
+		}
+		String imgSimpleName = "";
+		Image img;
+		try {
+			File imgFile = new File(xhtmlDir,hrefS);
+			String imgPath = imgFile.getCanonicalPath();
+			imgSimpleName = imgFile.getName();
+			img = Image.getInstance(imgPath);
+			img.setAlt(hrefS);
+			if(widthS != null) {
+				
+			}
+		} catch (Exception e) {
+			printlnerr("epub2pdf: problem adding image " + 
+					imgSimpleName + ": " + e.getMessage());
+			return;
+		}
+		img.setAlignment(Image.MIDDLE);
+		Rectangle pageRect = document.getPageSize();
+		float imgMaxWidth = pageRect.getWidth() - 9;
+		float imgMaxHeight = pageRect.getHeight() - 6;
+
+		float imgOrigWidth = img.getWidth();
+		float imgOrigHeight = img.getHeight();
+
+		if (imgOrigHeight > imgMaxHeight || imgOrigWidth > imgMaxWidth) {
+			img.scaleToFit(imgMaxWidth, imgMaxHeight);
+		}
+		addToDocument(img);
+	}
+	
 	public XhtmlHandler(String xhtml, Document docInProgress) throws MalformedURLException, IOException, SAXException {
 		super(docInProgress);
 		currentFile = xhtml;

@@ -50,15 +50,12 @@ public class EnhancedNode implements Node {
      */
     public Node getFirstChildNamed(String name) {
     	Node target = null;
-    	System.out.print(DomNodeType.getName(node.getNodeType()) + ":" + node.getNodeName() + "_getFirstChildNamed[" + name + "]:");
         for (Node n : getChildNodesIterable()) {
-        	System.out.print("...[" + n.getNodeName() + "|" + n.getLocalName() + "]");
             if (name.equals(n.getNodeName()) || name.equals(n.getLocalName())) {
                 target = n;
                 break;
             }
         }
-        System.out.println();
         return target;
     }
 

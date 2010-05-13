@@ -197,19 +197,7 @@ public class Opf {
 
                 DOMParser domParser = new DOMParser();
                 domParser.parse(path);
-                Document opfOrigDoc = domParser.getDocument();
-                NodeList odkids = opfOrigDoc.getChildNodes();
-                int oks = odkids.getLength();
-                for(int i = 0; i < oks; i++) {
-                	Node kid = odkids.item(i);
-                	System.out.println("" + DomNodeType.getName(kid.getNodeType()) + ":" + kid.getLocalName());
-                	NodeList grandkids = kid.getChildNodes();
-                	for(int j = 0; j < grandkids.getLength(); j++) {
-                		Node grandkid = grandkids.item(j);
-                		System.out.println("  " + DomNodeType.getName(grandkid.getNodeType()) + ":" + grandkid.getLocalName());
-                	}
-                	
-                }
+
                 EnhancedDocument opfDoc = new EnhancedDocument(domParser.getDocument());
                 Node pkN = opfDoc.getFirstChildNamed("package",DomNodeType.ELEMENT_NODE);
                 EnhancedNode opfPackageNode = new EnhancedNode(pkN);

@@ -775,19 +775,14 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 		//printlnerr("leaving updateStack; stack: " + stackStatus());
 	}
 
-	/**
-	 * Handles the attributes of an IMG tag.
-	 *
-	 * @param attributes
-	 * @throws IOException
-	 * @throws MalformedURLException
-	 * @throws DocumentException
-	 */
-	private void handleImage(Attributes attributes)
-	throws DocumentException 
+	private void handleImage(String url, String alt, String borderWidth, String alignment)
+	throws DocumentException
 	{
-		String url = attributes.getValue(XhtmlTags.URL);
-		String alt = attributes.getValue(XhtmlTags.ALT);
+		float marginTopPt = document.topMargin();
+		float marginBottomPt = document.bottomMargin();
+		float marginLeftPt = document.leftMargin();
+		float marginRightPt = document.rightMargin();
+		
 		if (url == null)
 			return;
 		Image img = null;
@@ -797,18 +792,17 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 			String imgPath = imgFile.getCanonicalPath();
 			imgSimpleName = imgFile.getName();
 			img = Image.getInstance(imgPath);
-			if (alt != null) {
-				img.setAlt(alt);
+			if (alt == null) {
+				alt = imgSimpleName;
 			}
+			img.setAlt(alt);
 		} catch (Exception e) {
 			printlnerr("epub2pdf: problem adding image " + 
 					imgSimpleName + ": " + e.getMessage());
 			return;
 		}
-		String property;
-		property = attributes.getValue(XhtmlTags.BORDERWIDTH);
-		if (property != null) {
-			int border = Integer.parseInt(property);
+		if (borderWidth != null) {
+			int border = Integer.parseInt(borderWidth);
 			if (border == 0) {
 				img.setBorder(Image.NO_BORDER);
 			} else {
@@ -816,14 +810,14 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 				img.setBorderWidth(border);
 			}
 		}
-		property = attributes.getValue(XhtmlTags.ALIGN);
-		if (property != null) {
+
+		if (alignment != null) {
 			int align = Image.DEFAULT;
-			if (ElementTags.ALIGN_LEFT.equalsIgnoreCase(property))
+			if (ElementTags.ALIGN_LEFT.equalsIgnoreCase(alignment))
 				align = Image.LEFT;
-			else if (ElementTags.ALIGN_RIGHT.equalsIgnoreCase(property))
+			else if (ElementTags.ALIGN_RIGHT.equalsIgnoreCase(alignment))
 				align = Image.RIGHT;
-			else if (ElementTags.ALIGN_MIDDLE.equalsIgnoreCase(property))
+			else if (ElementTags.ALIGN_MIDDLE.equalsIgnoreCase(alignment))
 				align = Image.MIDDLE;
 			img.setAlignment(align | Image.TEXTWRAP);
 		} else {
@@ -831,58 +825,51 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 		}
 
 		Rectangle pageRect = document.getPageSize();
-		float imgMaxWidth = pageRect.getWidth() - 9;
-		float imgMaxHeight = pageRect.getHeight() - 6;
-
+		float verticalMarginTotal = marginTopPt + marginBottomPt;
+		float horizontalMarginTotal = marginLeftPt + marginRightPt;
+		
+		float imgMaxWidth = pageRect.getWidth() - horizontalMarginTotal - 2;
+		float imgMaxHeight = pageRect.getHeight() - verticalMarginTotal - 2;
+		
 		float imgOrigWidth = img.getWidth();
-		float imgOrigHeight = img.getHeight();
+		float imgOrigHeight = img.getHeight();		
 
 		if (imgOrigHeight > imgMaxHeight || imgOrigWidth > imgMaxWidth) {
 			img.scaleToFit(imgMaxWidth, imgMaxHeight);
 		}
-		addToDocument(img);
+		boolean addOK = addToDocument(img);
+		if(!addOK) {
+			System.err.println("** addToDocument(" + img.getUrl() + ") returned false");
+		}
+		
+	}
+	
+	/**
+	 * Handles the attributes of an IMG tag.
+	 *
+	 * @param attributes
+	 * @throws DocumentException
+	 */
+	private void handleImage(Attributes attributes)
+	throws DocumentException 
+	{
+		String url = attributes.getValue(XhtmlTags.URL);
+		String alt = attributes.getValue(XhtmlTags.ALT);
+		String borderWidth = attributes.getValue(XhtmlTags.BORDERWIDTH);
+		String alignment = attributes.getValue(XhtmlTags.ALIGN);
+		handleImage(url,alt,borderWidth,alignment);
 	}
 
+	/**
+	 * Handles the attributes of an svg.image tag.
+	 * @param attributes
+	 * @throws DocumentException
+	 */
 	private void handleSvgImage(Attributes attributes)
 	throws DocumentException
 	{
-		String widthS = attributes.getValue("width");
-		String heightS = attributes.getValue("height");
-		String hrefS = attributes.getValue("xlink:href");
-		if(hrefS == null) {
-			hrefS = attributes.getValue("href");
-		}
-		if(hrefS == null) {
-			return;
-		}
-		String imgSimpleName = "";
-		Image img;
-		try {
-			File imgFile = new File(xhtmlDir,hrefS);
-			String imgPath = imgFile.getCanonicalPath();
-			imgSimpleName = imgFile.getName();
-			img = Image.getInstance(imgPath);
-			img.setAlt(hrefS);
-			if(widthS != null) {
-				
-			}
-		} catch (Exception e) {
-			printlnerr("epub2pdf: problem adding image " + 
-					imgSimpleName + ": " + e.getMessage());
-			return;
-		}
-		img.setAlignment(Image.MIDDLE);
-		Rectangle pageRect = document.getPageSize();
-		float imgMaxWidth = pageRect.getWidth() - 9;
-		float imgMaxHeight = pageRect.getHeight() - 6;
-
-		float imgOrigWidth = img.getWidth();
-		float imgOrigHeight = img.getHeight();
-
-		if (imgOrigHeight > imgMaxHeight || imgOrigWidth > imgMaxWidth) {
-			img.scaleToFit(imgMaxWidth, imgMaxHeight);
-		}
-		addToDocument(img);
+		String url = attributes.getValue("xlink:href");
+		handleImage(url, null, null, null);
 	}
 	
 	public XhtmlHandler(String xhtml, Document docInProgress) throws MalformedURLException, IOException, SAXException {
@@ -898,7 +885,7 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 
 		File xhtmlFile = new File(xhtml);
 
-		printlnerr("Processing " + xhtmlFile.getName());
+		//printlnerr("Processing " + xhtmlFile.getName());
 
 		xhtmlDir = xhtmlFile.getParentFile();
 

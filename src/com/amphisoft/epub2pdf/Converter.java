@@ -285,8 +285,25 @@ public class Converter {
         if (!(pageSizeOK && marginsOK)) {
             throw new RuntimeException("Failed to set PDF page size a/o margins");
         }
+        
+        int fileCount = contentFiles.size();
+        printlnerr("Processing " + fileCount + " HTML file(s): ");
+        int currentFile = 0;
 
         for (File file : contentFiles) {
+        	currentFile++;
+        	
+        	char progressChar;
+        	
+        	int mod10 = currentFile % 10;
+        	if(mod10 == 5)
+        		progressChar = '5';
+        	else if(mod10 == 0) 
+        		progressChar = '0';
+        	else
+        		progressChar = '.';
+        	
+        	printerr(progressChar);
             if (!(doc.isOpen())) {
                 doc.open();
                 doc.newPage();
@@ -318,6 +335,7 @@ public class Converter {
             }
             XhtmlHandler.process(file.getCanonicalPath(), doc);
         }
+        printlnerr();
 
         doc.close();
         System.err.println("PDF written to " + outputFile.getAbsolutePath());
@@ -327,14 +345,27 @@ public class Converter {
     /**
      * @param args
      */
-    public static void main(String[] args) throws Exception { //IOException,DocumentException
+    public static void main(String[] args) {
        if (args.length < 1)
             usage();
         else {
             for (String infile : args) {
-                Converter c = new Converter();
-                c.applyProperties(epub2pdfProps);
-                c.convert(infile);
+            	System.err.println();
+            	try {
+                    Converter c = new Converter();
+                    c.applyProperties(epub2pdfProps);
+                    c.convert(infile);
+            	} catch(Exception e) {
+            		System.err.println("Exception converting " + infile + ":");
+            		System.err.println("\t" + e.getClass().getSimpleName() + " at:");
+            		StackTraceElement topElem = e.getStackTrace()[0];
+            		System.err.print("\t\t" + topElem.getClassName() + ".");
+            		System.err.print(topElem.getMethodName());
+            		int line = topElem.getLineNumber();
+            		if(line > 9)
+            			System.err.print(":" + topElem.getLineNumber());
+            		System.err.println();
+            	}
             }
         }
     }

@@ -364,7 +364,7 @@ public class Opf {
                 g = new GuideItem(href, giType, title);
                 guideItems.add(g);
             } else {
-                printlnerr("Opf: ignoring unrecognized guide item type " + declaredMetadataType);
+                printlnerr("Opf: ignoring unrecognized guide item type \"" + declaredMetadataType + "\"");
             }
 
         }

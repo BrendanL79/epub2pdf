@@ -1,4 +1,4 @@
-epub2pdf v0.4 - 21 April 2010 - Copyright 2010 Brendan C. LeFebvre.
+epub2pdf v0.5 - 14 May 2010 - Copyright 2010 Brendan C. LeFebvre.
 
 See LICENSE DETAILS below for full license and warranty information.
 
@@ -66,10 +66,28 @@ output directory, or Java will choke.
 
 CHANGES
 
+Since v0.4:
+
+- Fixed incorrect cancellation of bold/italic modes in some cases.
+
+- Fixed failure to handle trailing spaces in epub2pdf.properties.
+
+- Console output is now prettier and more compact.
+
+- Improved alignment of full-page images.
+
+- Batch processing now continues after a failure.
+
+- Fixed a crash that occurred when converting some older EPUBs.
+
+
+
 Since v0.3:
 
 - PDF bookmark list now replicates any nesting in the EPUB's
 NCX table of contents.
+
+
 
 Since v0.2:
 

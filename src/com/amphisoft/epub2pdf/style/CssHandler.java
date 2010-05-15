@@ -135,6 +135,8 @@ public class CssHandler extends DefaultDocumentHandler {
     @Override
     public void property(String name, LexicalUnit value, boolean important)
     throws CSSException {
+    	if(latestTextSpec == null)
+    		latestTextSpec = new StyleSpecText();
 
         short luType = value.getLexicalUnitType();
         //System.err.print(

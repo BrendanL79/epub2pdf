@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="dist" name="epub2pdf">
 
-    <property name="epub2pdf.version" value="0.4"/>
+    <property name="epub2pdf.version" value="0.5"/>
     
     <path id="compile.classpath">
         <fileset dir="lib">

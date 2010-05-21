@@ -255,7 +255,11 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 		if(idAttr == null) {
 			idAttr = "";
 		}
-		SaxElement sE = new SaxElement(qName, saxElemIdCounter++, idAttr, currentITextStyle);
+		String className = attrMap.get("class");
+		if(className == null) {
+			className = "";
+		}
+		SaxElement sE = new SaxElement(qName, saxElemIdCounter++, className, idAttr, currentITextStyle);
 		//printlnerr("startElement: " + sE.toString());
 		saxElementStack.push(sE);
 
@@ -267,12 +271,6 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 
 					StyleSpecText classTextStyles = styleMap.getTextStyleSpecFor(qName, eClass);
 					if (classTextStyles != null) {
-						if (classTextStyles.isBold()) {
-							currentITextStyle |= Font.BOLD;
-						}
-						if (classTextStyles.isItalic()) {
-							currentITextStyle |= Font.ITALIC;
-						}
 						sE.applyTextStyles(classTextStyles);
 					}
 
@@ -284,7 +282,31 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 				//CssStyleMap styleTagStyles = cssParser.getStylesFromStyleTag(styleSource);
 				// ...
 			}
+			if(sE.textStyles == null) {
+				try {
+					int stackSize = saxElementStack.size();
+					if(stackSize>1) {
+					SaxElement enclosingElement = saxElementStack.elementAt(stackSize-2);
+					StyleSpecText enclosingSST = enclosingElement.textStyles;
+					if(enclosingSST != null)
+						sE.applyTextStyles(enclosingSST);
+					}
+				}
+				catch(Exception e) {}
+			}
 
+			StyleSpecText currentTextStyles = sE.textStyles;
+			if(currentTextStyles != null) {
+				if (currentTextStyles.isBold()) {
+					currentITextStyle |= Font.BOLD;
+				}
+				if (currentTextStyles.isItalic()) {
+					currentITextStyle |= Font.ITALIC;
+				}
+			}
+
+			//System.err.println("PUSH -> " + saxElementStack);
+			
 			previousTag = currentTag;
 			currentTag = qName;
 			if (document.isOpen()) {
@@ -406,7 +428,6 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 				document.open();
 				freshParagraph = true;
 			}
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -415,9 +436,10 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 
 	@Override
 	public void endElement(String uri, String localName, String qName) {
+		//System.err.println("PRE-POP  -> " + saxElementStack);
 		SaxElement closedElement =
 			saxElementStack.pop();
-		
+		//System.err.println("POST-POP -> " + saxElementStack);
 		currentITextStyle = closedElement.precedingItextStyle;
 		
 		//printlnerr("endElement:" + closedElement.toString());
@@ -938,13 +960,15 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
   static class SaxElement {
 		final String qName;
 		final int id;
+		final String className;
 		final String idAttr;
 		final int precedingItextStyle;
 		StyleSpecText textStyles;
 
-		SaxElement(String q, int i, String idA, int preStyle) {
+		SaxElement(String q, int i, String c, String idA, int preStyle) {
 			qName = q;
 			id = i;
+			className = c;
 			idAttr = idA;	
 			precedingItextStyle = preStyle;
 		}
@@ -956,6 +980,10 @@ public class XhtmlHandler extends SAXmyHtmlHandler implements LogEventPublisher 
 		@Override
 		public String toString() {
 			StringBuilder sB = new StringBuilder(qName);
+			if(className != null && className.length()>0) {
+				sB.append(":");
+				sB.append(className);
+			}
 			sB.append("_");
 			sB.append(id);
 			if(idAttr != null && idAttr.length()>0) {

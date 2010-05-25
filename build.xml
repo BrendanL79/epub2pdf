@@ -88,4 +88,26 @@
     <target name="dist" depends="init-dist,jar,dist-zip">
     </target>
 
+    <target name="umldoc">
+        <javadoc sourcepath="src" classpathref="compile.classpath" packagenames="com.*,org.*" destdir="dist/umldoc" private="true">
+            <link href="http://www.jgrapht.org/javadoc" />
+
+            <doclet name="org.umlgraph.doclet.UmlGraphDoc" path="lib/UmlGraph.jar">
+                <param name="-collapsible"/>
+                <param name="-enumerations" />
+                <param name="-enumconstants" />
+                <param name="-inferdep" />
+                <param name="-inferdepvis" value="private" />
+                <param name="-inferrel" />
+                <param name="-inferreltype" value="has"/>
+                <param name="-collpackages" value="java.util.*" />
+                <param name="-hide" value="(java.*|javax.*|org.w3c.*)" />
+                <param name="-qualify" />
+                <param name="-postfixpackage" />
+                <param name="-nodesep" value="0.12" />
+                <param name="-ranksep" value="0.2" />
+            </doclet>
+        </javadoc>
+    </target>
+
 </project>
